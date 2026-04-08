@@ -1,0 +1,34 @@
+import { state, elements } from './state.js';
+
+export function loadItemsFromLocalStorage() {
+    const savedItems = localStorage.getItem('weddingHomeItems');
+    const savedCategories = localStorage.getItem('weddingHomeCategories');
+    const savedRooms = localStorage.getItem('weddingHomeRooms');
+    const savedBudget = localStorage.getItem('weddingHomeBudget');
+   
+    if (savedItems) {
+        state.items = JSON.parse(savedItems);
+    }
+   
+    if (savedCategories) {
+        state.categories = JSON.parse(savedCategories);
+    }
+   
+    if (savedRooms) {
+        state.rooms = JSON.parse(savedRooms);
+    }
+   
+    if (savedBudget) {
+        state.totalBudget = parseFloat(savedBudget);
+        if (elements.totalBudget) {
+            elements.totalBudget.value = state.totalBudget;
+        }
+    }
+}
+
+export function saveItemsToLocalStorage() {
+    localStorage.setItem('weddingHomeItems', JSON.stringify(state.items));
+    localStorage.setItem('weddingHomeCategories', JSON.stringify(state.categories));
+    localStorage.setItem('weddingHomeRooms', JSON.stringify(state.rooms));
+    localStorage.setItem('weddingHomeBudget', state.totalBudget.toString());
+}

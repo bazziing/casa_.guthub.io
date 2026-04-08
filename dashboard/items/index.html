@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Itens - Casa dos Sonhos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body class="bg-[#f9f7fe] min-h-screen flex">
+    <!-- Sidebar (Same as dashboard) -->
+    <aside class="w-64 bg-white border-r border-purple-100 flex flex-col hidden md:flex">
+        <div class="p-6 border-b border-purple-50 flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
+                <i class="fas fa-heart text-white text-sm"></i>
+            </div>
+            <span class="font-bold text-purple-900 text-lg">Casa dos Sonhos</span>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="../index.html" class="flex items-center space-x-3 p-3 rounded-xl text-gray-500 hover:bg-purple-50 hover:text-purple-600 transition">
+                <i class="fas fa-chart-line w-5"></i>
+                <span>Visão Geral</span>
+            </a>
+            <a href="index.html" class="flex items-center space-x-3 p-3 rounded-xl bg-purple-50 text-purple-700 font-medium">
+                <i class="fas fa-list w-5"></i>
+                <span>Lista de Itens</span>
+            </a>
+            <a href="../rooms/index.html" class="flex items-center space-x-3 p-3 rounded-xl text-gray-500 hover:bg-purple-50 hover:text-purple-600 transition">
+                <i class="fas fa-palette w-5"></i>
+                <span>Cores e Cômodos</span>
+            </a>
+        </nav>
+        <div class="p-4 border-t border-purple-50">
+            <div class="flex items-center space-x-3 mb-4 p-2">
+                <div class="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center">
+                    <i class="fas fa-user text-purple-600"></i>
+                </div>
+                <div class="flex flex-col overflow-hidden">
+                    <span id="userEmail" class="text-xs font-medium text-purple-900 truncate">carregando...</span>
+                    <button id="logoutBtn" class="text-left text-[10px] text-red-500 hover:underline">Sair da conta</button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div class="flex-1 overflow-y-auto">
+            <div class="max-w-7xl mx-auto p-6 md:p-10 space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-purple-900">Lista de Compras</h1>
+                        <p class="text-gray-500 text-sm">Gerencie tudo o que sua casa precisa.</p>
+                    </div>
+                <button id="addItemBtn" class="px-6 py-2 bg-purple-600 text-white rounded-full text-sm font-medium hover:bg-purple-700 transition flex items-center space-x-2 shadow-lg shadow-purple-200">
+                    <i class="fas fa-plus"></i>
+                    <span>Novo Item</span>
+                </button>
+            </div>
+
+            <!-- Filters -->
+            <div class="bg-white p-4 rounded-2xl card-shadow flex flex-wrap gap-4 items-center">
+                <div class="flex-1 min-w-[200px]">
+                    <label class="text-[10px] uppercase text-gray-400 font-bold ml-2">Categoria</label>
+                    <select id="filterCategory" class="w-full bg-purple-50 px-4 py-2 rounded-xl text-sm outline-none border-none focus:ring-2 focus:ring-purple-200">
+                        <option value="">Todas Categorias</option>
+                    </select>
+                </div>
+                <div class="w-40">
+                    <label class="text-[10px] uppercase text-gray-400 font-bold ml-2">Prioridade</label>
+                    <select id="filterPriority" class="w-full bg-purple-50 px-4 py-2 rounded-xl text-sm outline-none border-none focus:ring-2 focus:ring-purple-200">
+                        <option value="">Todas</option>
+                        <option value="low">Baixa</option>
+                        <option value="medium">Média</option>
+                        <option value="high">Alta</option>
+                    </select>
+                </div>
+                <div class="w-40">
+                    <label class="text-[10px] uppercase text-gray-400 font-bold ml-2">Status</label>
+                    <select id="filterStatus" class="w-full bg-purple-50 px-4 py-2 rounded-xl text-sm outline-none border-none focus:ring-2 focus:ring-purple-200">
+                        <option value="">Todos</option>
+                        <option value="purchased">Comprado</option>
+                        <option value="not-purchased">Pendente</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Items Table -->
+            <div class="bg-white rounded-2xl overflow-hidden card-shadow">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-purple-50">
+                        <thead class="bg-purple-50/50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-[10px] font-bold text-purple-400 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-4 text-left text-[10px] font-bold text-purple-400 uppercase tracking-wider">Item</th>
+                                <th class="px-6 py-4 text-left text-[10px] font-bold text-purple-400 uppercase tracking-wider">Categoria</th>
+                                <th class="px-6 py-4 text-left text-[10px] font-bold text-purple-400 uppercase tracking-wider">Prioridade</th>
+                                <th class="px-6 py-4 text-left text-[10px] font-bold text-purple-400 uppercase tracking-wider">Preço</th>
+                                <th class="px-6 py-4 text-right text-[10px] font-bold text-purple-400 uppercase tracking-wider">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemsTableBody" class="divide-y divide-purple-50">
+                            <!-- Items row -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="emptyState" class="py-20 text-center hidden">
+                    <div class="w-20 h-20 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-box-open text-purple-200 text-3xl"></i>
+                    </div>
+                    <h3 class="text-gray-500 font-medium">Nenhum item encontrado</h3>
+                    <p class="text-gray-400 text-xs mt-1">Adicione novos itens para vê-los aqui.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Add Item (Reused) -->
+    <div id="addItemModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 modal modal-hidden px-4">
+        <div class="bg-white rounded-3xl w-full max-w-md p-8 card-shadow">
+            <h3 class="text-xl font-bold text-purple-900 mb-6">Novo Item</h3>
+            <form id="itemForm" class="space-y-4">
+                <input type="hidden" id="editItemId">
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase ml-1">Nome do Produto</label>
+                    <input type="text" id="itemName" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Categoria</label>
+                        <div class="flex space-x-2">
+                            <select id="itemCategory" class="flex-1 px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200 text-sm" required></select>
+                            <button type="button" id="addCategoryBtn" class="px-3 bg-purple-100 text-purple-600 rounded-xl hover:bg-purple-200">+</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Prioridade</label>
+                        <select id="itemPriority" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200 text-sm">
+                            <option value="low">Baixa</option>
+                            <option value="medium" selected>Média</option>
+                            <option value="high">Alta</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Preço Estimado</label>
+                        <input type="number" id="itemPrice" step="0.01" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Link (Opcional)</label>
+                        <input type="url" id="itemLink" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200">
+                    </div>
+                </div>
+                <div class="flex space-x-3 pt-6">
+                    <button type="button" id="cancelItemBtn" class="flex-1 py-3 text-gray-400 font-bold text-sm">Cancelar</button>
+                    <button type="submit" class="flex-1 py-3 bg-purple-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-purple-200">Salvar Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Add Category -->
+    <div id="addCategoryModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 modal modal-hidden px-4">
+        <div class="bg-white rounded-3xl w-full max-w-xs p-8 card-shadow text-center">
+            <h3 class="text-lg font-bold text-purple-900 mb-4">Nova Categoria</h3>
+            <form id="categoryForm" class="space-y-4">
+                <input type="text" id="newCategoryName" placeholder="Ex: Cozinha" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
+                <div class="flex space-x-2 pt-4">
+                    <button type="button" id="cancelCategoryBtn" class="flex-1 py-2 text-gray-400 text-sm font-bold">Cancelar</button>
+                    <button type="submit" class="flex-1 py-2 bg-purple-600 text-white rounded-xl text-sm font-bold">Criar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal px-4" style="display: none;">
+        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow transform transition-all scale-95">
+            <div class="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-sign-out-alt text-red-500 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-purple-900 text-center mb-2">Já vai embora?</h3>
+            <p class="text-gray-500 text-center mb-8 leading-relaxed">Sua lista e cores ficarão salvas com segurança na nuvem para quando você voltar.</p>
+            <div class="flex space-x-3">
+                <button id="cancelLogoutBtn" class="flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Ficar</button>
+                <a id="confirmLogoutBtn" href="../../auth/logout/index.html" class="flex-1 py-3 bg-red-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-200 hover:bg-red-600 transition text-center">Sair</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="../../assets/js/app.js"></script>
+</body>
+</html>

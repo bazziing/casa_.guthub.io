@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #f9f7fe;
+    color: #4a4458;
+}
+
+.gradient-bg {
+    background: linear-gradient(135deg, #e2d4f0 0%, #d4f0e8 100%);
+}
+
+/* Grid Inteligente: Nunca deixa os cards se espremerem demais */
+.auto-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    justify-content: center;
+}
+
+/* Grid Compacto para Estatísticas - Alinhado com o orçamento */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Garante que o conteúdo principal não "vaze" em layouts flex */
+main {
+    min-width: 0;
+}
+
+.card-shadow {
+    box-shadow: 0 10px 30px rgba(162, 143, 208, 0.15);
+    background-color: white;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 100%; /* Garante altura igual em grids */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Impede que conteúdo interno saia do card */
+}
+
+/* Garante que o grid não colapse em telas muito pequenas */
+.grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+/* Força o truncamento de textos longos para não empurrar o layout */
+.truncate-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.priority-low {
+    border-left: 4px solid #a0e8af;
+}
+
+.priority-medium {
+    border-left: 4px solid #ffd166;
+}
+
+.priority-high {
+    border-left: 4px solid #ff9a8b;
+}
+
+.progress-bar {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9e3f5;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #c6a8f0 0%, #a8f0e0 100%);
+    transition: width 0.5s ease;
+}
+
+input:checked + .slider {
+    background-color: #b399d4;
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+.slider {
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+.modal {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.modal-hidden {
+    opacity: 0;
+    transform: translateY(-20px);
+    pointer-events: none;
+}
+
+.color-preview {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.tab-button {
+    transition: all 0.3s ease;
+}
+
+.tab-button.active {
+    background-color: #b399d4;
+    color: white;
+}
+
+.room-color-scheme {
+    border-left: 4px solid;
+    padding-left: 12px;
+    margin-bottom: 16px;
+}
