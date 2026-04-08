@@ -69,8 +69,7 @@
                         <div>
                             <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Orçamento Total</p>
                             <div class="flex items-baseline space-x-2">
-                                <span class="text-3xl font-black text-purple-900">R$</span>
-                                <input type="number" id="totalBudget" class="text-3xl font-black text-purple-900 bg-transparent border-none outline-none w-48 focus:ring-0 p-0" placeholder="0">
+                                <input type="text" id="totalBudget" class="text-3xl font-black text-purple-900 bg-transparent border-none outline-none w-full focus:ring-0 p-0" placeholder="R$ 0,00">
                             </div>
                         </div>
                         <div class="md:text-right">
@@ -171,8 +170,8 @@
     </main>
 
     <!-- Logout Confirmation Modal -->
-    <div id="logoutModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal px-4" style="display: none;">
-        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow transform transition-all scale-95">
+    <div id="logoutModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow">
             <div class="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-6">
                 <i class="fas fa-sign-out-alt text-red-500 text-2xl"></i>
             </div>
