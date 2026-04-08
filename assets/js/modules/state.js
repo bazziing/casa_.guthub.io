@@ -5,7 +5,9 @@ export const state = {
     rooms: [],
     totalBudget: 0,
     currentSpending: 0,
-    totalEstimated: 0
+    totalEstimated: 0,
+    itemToDelete: null,
+    roomToDelete: null
 };
 
 // Proxied Elements to avoid null errors on different pages

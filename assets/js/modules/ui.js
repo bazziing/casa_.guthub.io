@@ -198,21 +198,16 @@ export function closeAddRoomModal() {
 export function openAddCategoryModal() { toggleModal('addCategoryModal', true); }
 export function closeAddCategoryModal() { toggleModal('addCategoryModal', false); document.getElementById('categoryForm')?.reset(); }
 
-export function openLogoutModal() {
-    const modal = document.getElementById('logoutModal');
-    if (modal) {
-        modal.style.display = 'flex';
-        setTimeout(() => { const content = modal.querySelector('div'); if (content) { content.classList.remove('scale-95'); content.classList.add('scale-100'); } }, 10);
-    }
-}
+export function openLogoutModal() { toggleModal('logoutModal', true); }
+export function closeLogoutModal() { toggleModal('logoutModal', false); }
 
-export function closeLogoutModal() {
-    const modal = document.getElementById('logoutModal');
-    if (modal) {
-        const content = modal.querySelector('div');
-        if (content) { content.classList.add('scale-95'); content.classList.remove('scale-100'); }
-        setTimeout(() => { modal.style.display = 'none'; }, 200);
-    }
+export function openDeleteConfirmModal(type) { 
+    const id = type === 'item' ? 'deleteItemModal' : 'deleteRoomModal';
+    toggleModal(id, true); 
+}
+export function closeDeleteConfirmModal(type) { 
+    const id = type === 'item' ? 'deleteItemModal' : 'deleteRoomModal';
+    toggleModal(id, false); 
 }
 
 export function switchTab(tabName) {

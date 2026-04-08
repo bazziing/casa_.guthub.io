@@ -1,20 +1,21 @@
 import { state, elements } from './modules/state.js';
 import { loadItemsFromLocalStorage as loadLocal, saveItemsToLocalStorage as saveLocal } from './modules/storage.js';
-import { calculateCurrentSpending } from './modules/utils.js';
+import { calculateCurrentSpending, formatCurrency } from './modules/utils.js';
 import { 
     renderItems, renderRooms, updateDashboard, 
     populateCategorySelects, populateCategoryFilters,
     openAddItemModal, closeAddItemModal,
     openAddRoomModal, closeAddRoomModal,
     openAddCategoryModal, closeAddCategoryModal,
-    switchTab, closeLogoutModal, toggleSidebar
+    switchTab, closeLogoutModal, toggleSidebar,
+    closeDeleteConfirmModal
 } from './modules/ui.js';
 import { 
     addOrUpdateItem, addNewCategory, addNewRoom,
-    togglePurchasedStatus, editItem, deleteItem,
-    editRoom, deleteRoom,
+    togglePurchasedStatus, editItem, deleteItem, confirmDeleteItem,
+    editRoom, deleteRoom, confirmDeleteRoom,
     syncColorInputs,
-    handleLogout
+    handleLogout, confirmLogout
 } from './modules/events.js';
 import { cloudService } from './classes/CloudService.js';
 
@@ -59,7 +60,7 @@ function applyCloudData(data) {
     if (document.getElementById('itemCategory')) populateCategorySelects();
     if (document.getElementById('filterCategory')) populateCategoryFilters();
     const budgetInput = document.getElementById('totalBudget');
-    if (budgetInput) budgetInput.value = state.totalBudget;
+    if (budgetInput) budgetInput.value = formatCurrency(state.totalBudget);
 }
 
 function addEventListeners() {
@@ -77,16 +78,41 @@ function addEventListeners() {
     const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
     if (cancelLogoutBtn) cancelLogoutBtn.onclick = () => closeLogoutModal();
 
+    const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+    if (confirmLogoutBtn) confirmLogoutBtn.onclick = (e) => { e.preventDefault(); confirmLogout(); };
+
+    // Modais de Exclusão
+    const confirmDeleteItemBtn = document.getElementById('confirmDeleteItemBtn');
+    if (confirmDeleteItemBtn) confirmDeleteItemBtn.onclick = confirmDeleteItem;
+
+    const cancelDeleteItemBtn = document.getElementById('cancelDeleteItemBtn');
+    if (cancelDeleteItemBtn) cancelDeleteItemBtn.onclick = () => closeDeleteConfirmModal('item');
+
+    const confirmDeleteRoomBtn = document.getElementById('confirmDeleteRoomBtn');
+    if (confirmDeleteRoomBtn) confirmDeleteRoomBtn.onclick = confirmDeleteRoom;
+
+    const cancelDeleteRoomBtn = document.getElementById('cancelDeleteRoomBtn');
+    if (cancelDeleteRoomBtn) cancelDeleteRoomBtn.onclick = () => closeDeleteConfirmModal('room');
+
     const budgetInput = document.getElementById('totalBudget');
     if (budgetInput) {
-        budgetInput.onchange = async () => {
+        budgetInput.onfocus = () => {
+            budgetInput.value = state.totalBudget || '';
+        };
+
+        budgetInput.onblur = async () => {
             const val = parseFloat(budgetInput.value) || 0;
             state.totalBudget = val;
+            budgetInput.value = formatCurrency(val);
             saveLocal();
             try {
                 await cloudService.saveSettings({ totalBudget: val, categories: state.categories });
                 updateDashboard();
             } catch (e) { console.error("Erro ao salvar budget:", e); }
+        };
+
+        budgetInput.onkeydown = (e) => {
+            if (e.key === 'Enter') budgetInput.blur();
         };
     }
 

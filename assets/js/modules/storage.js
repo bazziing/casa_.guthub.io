@@ -1,4 +1,5 @@
 import { state, elements } from './state.js';
+import { formatCurrency } from './utils.js';
 
 export function loadItemsFromLocalStorage() {
     const savedItems = localStorage.getItem('weddingHomeItems');
@@ -21,7 +22,7 @@ export function loadItemsFromLocalStorage() {
     if (savedBudget) {
         state.totalBudget = parseFloat(savedBudget);
         if (elements.totalBudget) {
-            elements.totalBudget.value = state.totalBudget;
+            elements.totalBudget.value = formatCurrency(state.totalBudget);
         }
     }
 }

@@ -6,6 +6,8 @@
     <title>Cores - Casa dos Sonhos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/nano.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
     <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body class="bg-[#f9f7fe] min-h-screen flex" data-auth-required>
@@ -84,8 +86,8 @@
     </main>
 
     <!-- Modal Add Room -->
-    <div id="addRoomModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 modal modal-hidden px-4">
-        <div class="bg-white rounded-3xl w-full max-w-md p-8 card-shadow">
+    <div id="addRoomModal" class="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-md p-8 card-shadow">
             <h3 class="text-xl font-bold text-purple-900 mb-6" id="roomModalTitle">Novo Cômodo</h3>
             <form id="roomForm" class="space-y-6">
                 <input type="hidden" id="editRoomId">
@@ -99,15 +101,15 @@
                         <div class="flex flex-col">
                             <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Principal</label>
                             <div class="flex items-center space-x-2 mt-1">
-                                <input type="color" id="primaryColor" value="#b399d4" class="w-10 h-10 border-none bg-transparent cursor-pointer">
-                                <input type="text" id="primaryColorHex" class="w-full text-xs border-b border-purple-100 outline-none uppercase" value="#B399D4">
+                                <div id="primaryColorPicker"></div>
+                                <input type="text" id="primaryColorHex" class="w-full text-xs border-b border-purple-100 outline-none uppercase" value="#8B5CF6">
                             </div>
                         </div>
                         <div class="flex flex-col">
                             <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Destaque</label>
                             <div class="flex items-center space-x-2 mt-1">
-                                <input type="color" id="accentColor" value="#ffd166" class="w-10 h-10 border-none bg-transparent cursor-pointer">
-                                <input type="text" id="accentColorHex" class="w-full text-xs border-b border-purple-100 outline-none uppercase" value="#FFD166">
+                                <div id="accentColorPicker"></div>
+                                <input type="text" id="accentColorHex" class="w-full text-xs border-b border-purple-100 outline-none uppercase" value="#FACC15">
                             </div>
                         </div>
                     </div>
@@ -115,31 +117,46 @@
                         <div class="flex flex-col">
                             <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Secundária</label>
                             <div class="flex items-center space-x-2 mt-1">
-                                <input type="color" id="secondaryColor" value="#d4f0e8" class="w-10 h-10 border-none bg-transparent cursor-pointer">
-                                <input type="text" id="secondaryColorHex" class="w-full text-xs border-b border-purple-100 outline-none uppercase" value="#D4F0E8">
+                                <div id="secondaryColorPicker"></div>
+                                <input type="text" id="secondaryColorHex" class="w-full text-xs border-b border-purple-100 outline-none uppercase" value="#2DD4BF">
                             </div>
                         </div>
                         <div class="flex flex-col">
                             <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Neutra</label>
                             <div class="flex items-center space-x-2 mt-1">
-                                <input type="color" id="neutralColor" value="#f8f9fa" class="w-10 h-10 border-none bg-transparent cursor-pointer">
-                                <input type="text" id="neutralColorHex" class="w-full text-xs border-b border-purple-100 outline-none uppercase" value="#F8F9FA">
+                                <div id="neutralColorPicker"></div>
+                                <input type="text" id="neutralColorHex" class="w-full text-xs border-b border-purple-100 outline-none uppercase" value="#FFFFFF">
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex space-x-3 pt-4">
-                    <button type="button" id="cancelRoomBtn" class="flex-1 py-3 text-gray-400 font-bold text-sm">Cancelar</button>
-                    <button type="submit" class="flex-1 py-3 bg-purple-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-purple-200">Salvar Cômodo</button>
+                    <button type="button" id="cancelRoomBtn" class="flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Cancelar</button>
+                    <button type="submit" class="flex-1 py-3 bg-purple-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-purple-200 hover:bg-purple-700 transition">Salvar Cômodo</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Delete Room Confirmation Modal -->
+    <div id="deleteRoomModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow">
+            <div class="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-trash-alt text-red-500 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-purple-900 text-center mb-2">Excluir Cômodo?</h3>
+            <p class="text-gray-500 text-center mb-8 leading-relaxed">Isso removerá a categoria e as cores associadas. Esta ação não pode ser desfeita.</p>
+            <div class="flex space-x-3">
+                <button id="cancelDeleteRoomBtn" class="flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Cancelar</button>
+                <button id="confirmDeleteRoomBtn" class="flex-1 py-3 bg-red-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-200 hover:bg-red-600 transition text-center">Excluir</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Logout Confirmation Modal -->
-    <div id="logoutModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal px-4" style="display: none;">
-        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow transform transition-all scale-95">
+    <div id="logoutModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow">
             <div class="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-6">
                 <i class="fas fa-sign-out-alt text-red-500 text-2xl"></i>
             </div>
@@ -147,7 +164,7 @@
             <p class="text-gray-500 text-center mb-8 leading-relaxed">Sua lista e cores ficarão salvas com segurança na nuvem para quando você voltar.</p>
             <div class="flex space-x-3">
                 <button id="cancelLogoutBtn" class="flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Ficar</button>
-                <a id="confirmLogoutBtn" href="../../auth/logout/index.html" class="flex-1 py-3 bg-red-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-200 hover:bg-red-600 transition text-center">Sair</a>
+                <button id="confirmLogoutBtn" class="flex-1 py-3 bg-red-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-200 hover:bg-red-600 transition text-center">Sair</button>
             </div>
         </div>
     </div>

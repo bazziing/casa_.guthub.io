@@ -126,8 +126,8 @@
     </main>
 
     <!-- Modal Add Item (Reused) -->
-    <div id="addItemModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 modal modal-hidden px-4">
-        <div class="bg-white rounded-3xl w-full max-w-md p-8 card-shadow">
+    <div id="addItemModal" class="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-md p-8 card-shadow">
             <h3 class="text-xl font-bold text-purple-900 mb-6">Novo Item</h3>
             <form id="itemForm" class="space-y-4">
                 <input type="hidden" id="editItemId">
@@ -163,30 +163,45 @@
                     </div>
                 </div>
                 <div class="flex space-x-3 pt-6">
-                    <button type="button" id="cancelItemBtn" class="flex-1 py-3 text-gray-400 font-bold text-sm">Cancelar</button>
-                    <button type="submit" class="flex-1 py-3 bg-purple-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-purple-200">Salvar Item</button>
+                    <button type="button" id="cancelItemBtn" class="flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Cancelar</button>
+                    <button type="submit" class="flex-1 py-3 bg-purple-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-purple-200 hover:bg-purple-700 transition">Salvar Item</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Modal Add Category -->
-    <div id="addCategoryModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 modal modal-hidden px-4">
-        <div class="bg-white rounded-3xl w-full max-w-xs p-8 card-shadow text-center">
-            <h3 class="text-lg font-bold text-purple-900 mb-4">Nova Categoria</h3>
+    <div id="addCategoryModal" class="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-xs p-8 card-shadow text-center">
+            <h3 class="text-xl font-bold text-purple-900 mb-6">Nova Categoria</h3>
             <form id="categoryForm" class="space-y-4">
                 <input type="text" id="newCategoryName" placeholder="Ex: Cozinha" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
                 <div class="flex space-x-2 pt-4">
-                    <button type="button" id="cancelCategoryBtn" class="flex-1 py-2 text-gray-400 text-sm font-bold">Cancelar</button>
-                    <button type="submit" class="flex-1 py-2 bg-purple-600 text-white rounded-xl text-sm font-bold">Criar</button>
+                    <button type="button" id="cancelCategoryBtn" class="flex-1 py-3 text-gray-400 text-sm font-bold hover:bg-gray-50 rounded-2xl transition">Cancelar</button>
+                    <button type="submit" class="flex-1 py-3 bg-purple-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-purple-200 hover:bg-purple-700 transition">Criar</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Delete Item Confirmation Modal -->
+    <div id="deleteItemModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow">
+            <div class="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-trash-alt text-red-500 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-purple-900 text-center mb-2">Excluir Item?</h3>
+            <p class="text-gray-500 text-center mb-8 leading-relaxed">Esta ação não pode ser desfeita. O item será removido permanentemente da sua lista.</p>
+            <div class="flex space-x-3">
+                <button id="cancelDeleteItemBtn" class="flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Cancelar</button>
+                <button id="confirmDeleteItemBtn" class="flex-1 py-3 bg-red-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-200 hover:bg-red-600 transition text-center">Excluir</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Logout Confirmation Modal -->
-    <div id="logoutModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal px-4" style="display: none;">
-        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow transform transition-all scale-95">
+    <div id="logoutModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow">
             <div class="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-6">
                 <i class="fas fa-sign-out-alt text-red-500 text-2xl"></i>
             </div>
@@ -194,7 +209,7 @@
             <p class="text-gray-500 text-center mb-8 leading-relaxed">Sua lista e cores ficarão salvas com segurança na nuvem para quando você voltar.</p>
             <div class="flex space-x-3">
                 <button id="cancelLogoutBtn" class="flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Ficar</button>
-                <a id="confirmLogoutBtn" href="../../auth/logout/index.html" class="flex-1 py-3 bg-red-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-200 hover:bg-red-600 transition text-center">Sair</a>
+                <button id="confirmLogoutBtn" class="flex-1 py-3 bg-red-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-200 hover:bg-red-600 transition text-center">Sair</button>
             </div>
         </div>
     </div>
