@@ -233,3 +233,10 @@ export function switchTab(tabName) {
         colorsTabContent?.classList.remove('hidden');
     }
 }
+
+export function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    sidebar?.classList.toggle('active');
+    overlay?.classList.toggle('active');
+}

@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
     getFirestore, doc, setDoc, getDoc, getDocs, collection, 
-    deleteDoc, onSnapshot, updateDoc, writeBatch 
+    deleteDoc, onSnapshot, updateDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { 
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
@@ -16,6 +16,7 @@ export class CloudService {
         this.auth = getAuth(this.app);
         this.user = null;
         this.userDocRef = null;
+        this.unsubscribe = null;
     }
 
     onAuthChange(callback) {
@@ -30,7 +31,7 @@ export class CloudService {
         const cred = await createUserWithEmailAndPassword(this.auth, email, password);
         await setDoc(doc(this.db, COLLECTION_NAME, cred.user.uid), {
             profile: { email: cred.user.email, uid: cred.user.uid },
-            settings: { totalBudget: 0, categories: ['Móveis', 'Eletros', 'Decoração'] }
+            settings: { totalBudget: 0, categories: ['Móveis', 'Eletros', 'Decoração'], totalEstimated: 0, currentSpending: 0 }
         });
         return cred;
     }
@@ -38,14 +39,11 @@ export class CloudService {
     async login(email, password) { return signInWithEmailAndPassword(this.auth, email, password); }
     async logout() { return signOut(this.auth); }
 
-    // Salvar configurações globais (Budget, Categorias, Totais)
     async saveSettings(settings) {
         if (!this.userDocRef) return;
-        // Agora incluímos o totalEstimated nas settings do documento do usuário
         await setDoc(this.userDocRef, { settings }, { merge: true });
     }
 
-    // Gerenciamento de Cômodos
     async saveRoom(room) {
         if (!this.userDocRef) return;
         const roomRef = doc(this.db, COLLECTION_NAME, this.user.uid, 'rooms', room.id);
@@ -58,7 +56,6 @@ export class CloudService {
         await deleteDoc(roomRef);
     }
 
-    // Gerenciamento de Itens (dentro de um cômodo)
     async saveItem(roomId, item) {
         if (!this.userDocRef) return;
         const itemRef = doc(this.db, COLLECTION_NAME, this.user.uid, 'rooms', roomId, 'items', item.id);
@@ -71,16 +68,24 @@ export class CloudService {
         await deleteDoc(itemRef);
     }
 
-    // CARREGAR TUDO (A estrutura agora exige buscar subcoleções)
-    async loadFullProject(callback) {
+    // Método para escutar mudanças em tempo real (Restaurado)
+    listenToChanges(callback) {
+        if (this.unsubscribe) this.unsubscribe();
         if (!this.userDocRef) return;
 
+        this.unsubscribe = onSnapshot(this.userDocRef, async (docSnap) => {
+            if (docSnap.exists()) {
+                // Ao mudar o documento principal (settings), recarregamos o projeto
+                await this.loadFullProject(callback);
+            }
+        });
+    }
+
+    async loadFullProject(callback) {
+        if (!this.userDocRef) return;
         try {
-            // 1. Pegar Configurações
             const userSnap = await getDoc(this.userDocRef);
             const settings = userSnap.data()?.settings || { totalBudget: 0, categories: [] };
-
-            // 2. Pegar Cômodos
             const roomsSnap = await getDocs(collection(this.db, COLLECTION_NAME, this.user.uid, 'rooms'));
             const rooms = [];
             const allItems = [];
@@ -88,8 +93,6 @@ export class CloudService {
             for (const roomDoc of roomsSnap.docs) {
                 const roomData = roomDoc.data();
                 rooms.push(roomData);
-
-                // 3. Pegar Itens de cada cômodo
                 const itemsSnap = await getDocs(collection(this.db, COLLECTION_NAME, this.user.uid, 'rooms', roomDoc.id, 'items'));
                 itemsSnap.forEach(itemDoc => {
                     allItems.push({ ...itemDoc.data(), roomId: roomDoc.id });
@@ -102,10 +105,7 @@ export class CloudService {
                 rooms: rooms,
                 items: allItems
             });
-
-        } catch (error) {
-            console.error("Erro ao carregar projeto completo:", error);
-        }
+        } catch (error) { console.error("Erro ao carregar projeto:", error); }
     }
 }
 

@@ -7,7 +7,7 @@ import {
     openAddItemModal, closeAddItemModal,
     openAddRoomModal, closeAddRoomModal,
     openAddCategoryModal, closeAddCategoryModal,
-    switchTab, closeLogoutModal
+    switchTab, closeLogoutModal, toggleSidebar
 } from './modules/ui.js';
 import { 
     addOrUpdateItem, addNewCategory, addNewRoom,
@@ -22,19 +22,25 @@ function init() {
     loadLocal();
     cloudService.onAuthChange(async (user) => {
         if (!user) {
-            if (!window.location.pathname.endsWith('index.html') && !window.location.pathname.endsWith('/')) {
-                const isDashboard = window.location.pathname.includes('/dashboard/');
-                window.location.href = isDashboard ? '../index.html' : '../../index.html';
+            // REDIRECIONAMENTO IMEDIATO
+            const isDashboard = window.location.pathname.includes('/dashboard/');
+            if (isDashboard) {
+                window.location.href = window.location.pathname.includes('/items/') || window.location.pathname.includes('/rooms/') 
+                    ? '../../index.html' 
+                    : '../index.html';
             }
             return;
         }
+
+        // USUÁRIO LOGADO: Revelar App
+        document.body.classList.add('auth-ready');
+        const loader = document.getElementById('auth-guard-loader');
+        if (loader) loader.style.display = 'none';
+
         const userEmailEl = document.getElementById('userEmail');
         if (userEmailEl) userEmailEl.textContent = user.email;
-
-        // NOVO: Carregamento hierárquico (Settings -> Rooms -> Items)
-        await cloudService.loadFullProject((data) => {
-            applyCloudData(data);
-        });
+        await cloudService.loadFullProject((data) => { applyCloudData(data); });
+        cloudService.listenToChanges((data) => { applyCloudData(data); });
     });
     addEventListeners();
 }
@@ -45,44 +51,45 @@ function applyCloudData(data) {
     state.categories = data.categories || [];
     state.rooms = data.rooms || [];
     state.totalBudget = data.totalBudget || 0;
-    
     saveLocal();
     calculateCurrentSpending();
-    
     if (document.getElementById('itemsTableBody')) renderItems();
     if (document.getElementById('roomsContainer')) renderRooms();
     if (document.getElementById('totalItems') || document.getElementById('totalEstimated')) updateDashboard();
     if (document.getElementById('itemCategory')) populateCategorySelects();
     if (document.getElementById('filterCategory')) populateCategoryFilters();
-    
     const budgetInput = document.getElementById('totalBudget');
     if (budgetInput) budgetInput.value = state.totalBudget;
 }
 
 function addEventListeners() {
+    // Mobile Menu
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    if (mobileMenuBtn) mobileMenuBtn.onclick = toggleSidebar;
+
+    const overlay = document.querySelector('.sidebar-overlay');
+    if (overlay) overlay.onclick = toggleSidebar;
+
+    // Auth - Sair da conta
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) logoutBtn.onclick = (e) => { e.preventDefault(); handleLogout(); };
     
     const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
     if (cancelLogoutBtn) cancelLogoutBtn.onclick = () => closeLogoutModal();
-const budgetInput = document.getElementById('totalBudget');
-if (budgetInput) {
-    budgetInput.onchange = async () => {
-        const val = parseFloat(budgetInput.value) || 0;
-        state.totalBudget = val;
-        saveLocal();
-        // Salvar no Firebase usando a nova lógica de settings
-        try {
-            await cloudService.saveSettings({ 
-                totalBudget: val, 
-                categories: state.categories 
-            });
-            updateDashboard();
-        } catch (e) {
-            console.error("Erro ao salvar budget:", e);
-        }
-    };
-}
+
+    const budgetInput = document.getElementById('totalBudget');
+    if (budgetInput) {
+        budgetInput.onchange = async () => {
+            const val = parseFloat(budgetInput.value) || 0;
+            state.totalBudget = val;
+            saveLocal();
+            try {
+                await cloudService.saveSettings({ totalBudget: val, categories: state.categories });
+                updateDashboard();
+            } catch (e) { console.error("Erro ao salvar budget:", e); }
+        };
+    }
+
     if (elements.filterCategory) elements.filterCategory.onchange = renderItems;
     if (elements.filterPriority) elements.filterPriority.onchange = renderItems;
     if (elements.filterStatus) elements.filterStatus.onchange = renderItems;

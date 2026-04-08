@@ -8,9 +8,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
-<body class="bg-[#f9f7fe] min-h-screen flex">
+<body class="bg-[#f9f7fe] min-h-screen flex" data-auth-required>
+    <div id="auth-guard-loader">
+        <div class="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+    </div>
     <!-- Sidebar -->
-    <aside class="w-64 bg-white border-r border-purple-100 flex flex-col hidden md:flex">
+    <aside id="sidebar" class="w-64 bg-white border-r border-purple-100 flex flex-col hidden md:flex">
         <div class="p-6 border-b border-purple-50 flex items-center space-x-3">
             <div class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
                 <i class="fas fa-heart text-white text-sm"></i>
@@ -46,6 +49,12 @@
 
     <!-- Main Content -->
     <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <!-- Header Mobile -->
+        <header class="md:hidden bg-white p-4 border-b border-purple-100 flex justify-between items-center shrink-0">
+            <span class="font-bold text-purple-900">Casa dos Sonhos</span>
+            <button id="mobileMenuBtn" class="text-purple-600 p-2"><i class="fas fa-bars text-xl"></i></button>
+        </header>
+
         <div class="flex-1 overflow-y-auto">
             <div class="max-w-7xl mx-auto p-6 md:p-10 space-y-6">
                 <div class="flex justify-between items-center">
@@ -143,6 +152,7 @@
         </div>
     </div>
 
+    <div class="sidebar-overlay"></div>
     <script type="module" src="../../assets/js/app.js"></script>
 </body>
 </html>
