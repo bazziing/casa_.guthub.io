@@ -9,7 +9,7 @@ import {
     closeAddCategoryModal,
     openLogoutModal, closeLogoutModal,
     openDeleteConfirmModal, closeDeleteConfirmModal,
-    openShareModal, showAlert, showConfirm
+    openShareModal, showAlert, showConfirm, renderSavingsGrid, renderProjectMembers
 } from './ui.js';
 import { cloudService } from '../classes/CloudService.js';
 
@@ -213,8 +213,23 @@ export async function confirmDeleteItem() {
 }
 
 // COMPARTILHAMENTO
-export function openShare() {
+export async function openShare() {
     openShareModal(cloudService.projectId);
+    
+    // Buscar e renderizar membros
+    const membersList = document.getElementById('projectMembersList');
+    if (membersList) {
+        // Mostrar loading inicial
+        membersList.innerHTML = `
+            <div class="flex items-center space-x-2 p-2 animate-pulse">
+                <div class="w-8 h-8 rounded-full bg-purple-100"></div>
+                <div class="h-4 bg-purple-50 rounded w-24"></div>
+            </div>
+        `;
+        
+        const members = await cloudService.getProjectMembers();
+        renderProjectMembers(members, cloudService.user?.email);
+    }
 }
 
 export async function confirmJoinProject() {
@@ -446,5 +461,117 @@ export function editRoom(roomId) {
         });
 
         openAddRoomModal();
+    }
+}
+
+// COFRINHO
+export async function handleSavingsSubmit(e) {
+    e.preventDefault();
+    const target = parseFloat(document.getElementById('savingsTargetInput')?.value);
+    const month = parseInt(document.getElementById('savingsMonthInput')?.value);
+    const year = parseInt(document.getElementById('savingsYearInput')?.value);
+    const frequency = document.getElementById('savingsFrequencyInput')?.value;
+
+    if (isNaN(target) || isNaN(month) || isNaN(year) || !frequency) return;
+
+    // Calcular número de períodos
+    const targetDate = new Date(year, month - 1, 1);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    
+    let periods = 0;
+    if (frequency === 'monthly') {
+        periods = (targetDate.getFullYear() - today.getFullYear()) * 12 + (targetDate.getMonth() - today.getMonth());
+    } else if (frequency === 'weekly') {
+        const diffTime = targetDate - today;
+        periods = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
+    } else if (frequency === 'daily') {
+        const diffTime = targetDate - today;
+        periods = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    if (periods <= 0) {
+        showAlert('A data objetivo deve ser no futuro!', 'Erro de Data', 'error');
+        return;
+    }
+
+    // Gerar grid com valores variados
+    const grid = [];
+    
+    // Gerar pesos aleatórios
+    const weights = [];
+    for (let i = 0; i < periods; i++) {
+        weights.push(0.5 + Math.random()); // Variação entre 0.5 e 1.5
+    }
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
+    
+    let sumGenerated = 0;
+    for (let i = 0; i < periods; i++) {
+        let val = (weights[i] / totalWeight) * target;
+        val = Math.round(val * 100) / 100; // Arredondar para 2 casas
+        grid.push({ value: val, completed: false });
+        sumGenerated += val;
+    }
+    
+    // Ajustar erro de arredondamento no último
+    const diff = target - sumGenerated;
+    grid[grid.length - 1].value = Math.round((grid[grid.length - 1].value + diff) * 100) / 100;
+
+    state.savingsTarget = target;
+    state.savingsDate = { month, year };
+    state.savingsFrequency = frequency;
+    state.savingsGrid = grid;
+
+    saveItemsToLocalStorage();
+    await cloudService.saveSettings({ 
+        savingsTarget: state.savingsTarget,
+        savingsDate: state.savingsDate,
+        savingsFrequency: state.savingsFrequency,
+        savingsGrid: state.savingsGrid,
+        totalBudget: state.totalBudget
+    });
+    
+    renderSavingsGrid();
+}
+
+export async function toggleSavingsCell(index) {
+    const cell = state.savingsGrid[index];
+    if (!cell) return;
+
+    cell.completed = !cell.completed;
+    
+    // Somar ao orçamento se completado, subtrair se desmarcado
+    if (cell.completed) {
+        state.totalBudget += cell.value;
+    } else {
+        state.totalBudget -= cell.value;
+    }
+
+    saveItemsToLocalStorage();
+    await cloudService.saveSettings({ 
+        savingsGrid: state.savingsGrid,
+        totalBudget: state.totalBudget
+    });
+    
+    renderSavingsGrid();
+    updateDashboard(); // Atualiza dashboard se os elementos estiverem presentes
+}
+
+export async function resetSavings() {
+    const confirmed = await showConfirm('Tem certeza que deseja reiniciar seu cofrinho? Isso não afetará o orçamento atual, mas o tabuleiro será apagado.', 'Reiniciar Cofrinho');
+    if (confirmed) {
+        state.savingsGrid = [];
+        state.savingsTarget = 0;
+        state.savingsDate = null;
+        state.savingsFrequency = null;
+        
+        saveItemsToLocalStorage();
+        await cloudService.saveSettings({ 
+            savingsGrid: [],
+            savingsTarget: 0,
+            savingsDate: null,
+            savingsFrequency: null
+        });
+        renderSavingsGrid();
     }
 }

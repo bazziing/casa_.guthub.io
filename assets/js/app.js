@@ -9,7 +9,11 @@ import {
     openAddCategoryModal, closeAddCategoryModal,
     switchTab, closeLogoutModal, toggleSidebar,
     closeDeleteConfirmModal, closeShareModal, closeAllModals,
-    openRoomsSummaryModal, closeRoomsSummaryModal
+    openRoomsSummaryModal, closeRoomsSummaryModal,
+    openPurchasedItemsModal, closePurchasedItemsModal,
+    openHighPriorityModal, closeHighPriorityModal,
+    openCategoriesSummaryModal, closeCategoriesSummaryModal,
+    renderSavingsGrid
 } from './modules/ui.js';
 import { 
     addOrUpdateItem, addNewCategory, addNewRoom,
@@ -17,7 +21,8 @@ import {
     editRoom, deleteRoom, confirmDeleteRoom,
     syncColorInputs,
     handleLogout, confirmLogout, fetchLinkData,
-    openShare, confirmJoinProject, copyProjectId, shareViaWhatsapp
+    openShare, confirmJoinProject, copyProjectId, shareViaWhatsapp,
+    handleSavingsSubmit, toggleSavingsCell, resetSavings
 } from './modules/events.js';
 import { cloudService } from './classes/CloudService.js';
 
@@ -72,6 +77,12 @@ function applyCloudData(data) {
     state.categories = data.categories || [];
     state.rooms = data.rooms || [];
     state.totalBudget = data.totalBudget || 0;
+    
+    state.savingsTarget = data.savingsTarget || 0;
+    state.savingsDate = data.savingsDate || null;
+    state.savingsFrequency = data.savingsFrequency || null;
+    state.savingsGrid = data.savingsGrid || [];
+    
     saveLocal();
     calculateCurrentSpending();
     if (document.getElementById('itemsTableBody')) renderItems();
@@ -81,6 +92,11 @@ function applyCloudData(data) {
     if (document.getElementById('filterCategory')) populateCategoryFilters();
     const budgetInput = document.getElementById('totalBudget');
     if (budgetInput) budgetInput.value = formatCurrency(state.totalBudget);
+    
+    // Renderiza grid se estiver na página do cofrinho
+    if (typeof renderSavingsGrid === 'function' && document.getElementById('savingsContainer')) {
+        renderSavingsGrid();
+    }
 }
 
 function addEventListeners() {
@@ -210,6 +226,45 @@ function addEventListeners() {
 
     const closeRoomsSummaryBtn = document.getElementById('closeRoomsSummaryModalBtn');
     if (closeRoomsSummaryBtn) closeRoomsSummaryBtn.onclick = closeRoomsSummaryModal;
+
+    // Itens Comprados
+    const openPurchasedModalBtn = document.getElementById('openPurchasedModalBtn');
+    if (openPurchasedModalBtn) openPurchasedModalBtn.onclick = openPurchasedItemsModal;
+
+    const closePurchasedModalBtn = document.getElementById('closePurchasedItemsModalBtn');
+    if (closePurchasedModalBtn) closePurchasedModalBtn.onclick = closePurchasedItemsModal;
+
+    // Alta Prioridade
+    const openHighPriorityModalBtn = document.getElementById('openHighPriorityModalBtn');
+    if (openHighPriorityModalBtn) openHighPriorityModalBtn.onclick = openHighPriorityModal;
+
+    const closeHighPriorityModalBtn = document.getElementById('closeHighPriorityModalBtn');
+    if (closeHighPriorityModalBtn) closeHighPriorityModalBtn.onclick = closeHighPriorityModal;
+
+    // Resumo de Categorias
+    const openCategoriesSummaryModalBtn = document.getElementById('openCategoriesSummaryModalBtn');
+    if (openCategoriesSummaryModalBtn) openCategoriesSummaryModalBtn.onclick = openCategoriesSummaryModal;
+
+    const closeCategoriesSummaryModalBtn = document.getElementById('closeCategoriesSummaryModalBtn');
+    if (closeCategoriesSummaryModalBtn) closeCategoriesSummaryModalBtn.onclick = closeCategoriesSummaryModal;
+
+    // Cofrinho
+    const savingsForm = document.getElementById('savingsForm');
+    if (savingsForm) savingsForm.onsubmit = handleSavingsSubmit;
+
+    const savingsGrid = document.getElementById('savingsGrid');
+    if (savingsGrid) {
+        savingsGrid.onclick = (e) => {
+            const cell = e.target.closest('.savings-cell');
+            if (cell) {
+                const index = parseInt(cell.dataset.index);
+                toggleSavingsCell(index);
+            }
+        };
+    }
+
+    const resetSavingsBtn = document.getElementById('resetSavingsBtn');
+    if (resetSavingsBtn) resetSavingsBtn.onclick = resetSavings;
 
     // Fechar modais com ESC
     document.addEventListener('keydown', (e) => {

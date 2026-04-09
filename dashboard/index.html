@@ -35,6 +35,10 @@
                 <i class="fas fa-palette w-5"></i>
                 <span>Cores e Cômodos</span>
             </a>
+            <a href="savings/index.html" class="flex items-center space-x-3 p-3 rounded-xl text-gray-500 hover:bg-purple-50 hover:text-purple-600 transition">
+                <i class="fas fa-piggy-bank w-5"></i>
+                <span>Cofrinho</span>
+            </a>
             <button id="openShareModalBtn" class="w-full flex items-center space-x-3 p-3 rounded-xl text-gray-500 hover:bg-purple-50 hover:text-purple-600 transition">
                 <i class="fas fa-users w-5"></i>
                 <span>Compartilhar</span>
@@ -106,33 +110,33 @@
                             <p id="totalEstimated" class="text-xl font-bold text-purple-900">R$ 0,00</p>
                         </div>
                     </button>
-                    <div class="bg-white p-6 rounded-2xl card-shadow flex items-center space-x-4 border-l-4 border-green-200">
-                        <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-green-600 shrink-0">
+                    <button id="openPurchasedModalBtn" class="bg-white p-6 rounded-2xl card-shadow flex items-center space-x-4 border-l-4 border-green-200 hover:bg-green-50 transition text-left group">
+                        <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-green-600 shrink-0 group-hover:scale-110 transition">
                             <i class="fas fa-check-circle"></i>
                         </div>
                         <div class="min-w-0">
                             <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider truncate">Comprados</p>
                             <p id="purchasedItems" class="text-xl font-bold text-green-600">0</p>
                         </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl card-shadow flex items-center space-x-4 border-l-4 border-yellow-200">
-                        <div class="w-12 h-12 rounded-xl bg-yellow-100 flex items-center justify-center text-yellow-600 shrink-0">
+                    </button>
+                    <button id="openHighPriorityModalBtn" class="bg-white p-6 rounded-2xl card-shadow flex items-center space-x-4 border-l-4 border-orange-200 hover:bg-orange-50 transition text-left group">
+                        <div class="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 shrink-0 group-hover:scale-110 transition">
                             <i class="fas fa-exclamation-triangle"></i>
                         </div>
                         <div class="min-w-0">
                             <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider truncate">Alta Prioridade</p>
-                            <p id="highPriorityItems" class="text-xl font-bold text-yellow-600">0</p>
+                            <p id="highPriorityItems" class="text-xl font-bold text-orange-600">0</p>
                         </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl card-shadow flex items-center space-x-4 border-l-4 border-indigo-200">
-                        <div class="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                    </button>
+                    <button id="openCategoriesSummaryModalBtn" class="bg-white p-6 rounded-2xl card-shadow flex items-center space-x-4 border-l-4 border-indigo-200 hover:bg-indigo-50 transition text-left group">
+                        <div class="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 group-hover:scale-110 transition">
                             <i class="fas fa-layer-group"></i>
                         </div>
                         <div class="min-w-0">
                             <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider truncate">Categorias</p>
                             <p id="totalCategories" class="text-xl font-bold text-indigo-900">0</p>
                         </div>
-                    </div>
+                    </button>
                 </div>
 
                 <!-- Quick Access -->
@@ -325,6 +329,18 @@
                         <button id="confirmJoinProjectBtn" class="px-4 bg-purple-600 text-white rounded-xl font-bold text-sm hover:bg-purple-700 transition">Conectar</button>
                     </div>
                 </div>
+
+                <!-- Project Members -->
+                <div id="projectMembersSection" class="pt-4 border-t border-purple-50">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Membros Conectados</label>
+                    <div id="projectMembersList" class="mt-2 space-y-2">
+                        <!-- Members will be injected here -->
+                        <div class="flex items-center space-x-2 p-2 animate-pulse">
+                            <div class="w-8 h-8 rounded-full bg-purple-100"></div>
+                            <div class="h-4 bg-purple-50 rounded w-24"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="mt-8">
@@ -378,6 +394,51 @@
             <div id="messageActions" class="flex space-x-3">
                 <button id="messageCancelBtn" class="hidden flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Cancelar</button>
                 <button id="messageConfirmBtn" class="flex-1 py-3 bg-purple-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-purple-200 hover:bg-purple-700 transition">Entendi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchased Items Modal -->
+    <div id="purchasedItemsModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-lg p-8 card-shadow">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-purple-900">Itens Comprados</h3>
+                <button id="closePurchasedItemsModalBtn" class="text-gray-400 hover:text-purple-600 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <div id="purchasedItemsContainer" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                <!-- Purchased items will be injected here -->
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-purple-50 flex justify-between items-center">
+                <span class="text-gray-500 font-bold uppercase text-[10px] tracking-widest">Gasto Total</span>
+                <span id="purchasedItemsTotal" class="text-xl font-black text-green-600">R$ 0,00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- High Priority Items Modal -->
+    <div id="highPriorityModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-lg p-8 card-shadow">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-purple-900">Itens de Alta Prioridade</h3>
+                <button id="closeHighPriorityModalBtn" class="text-gray-400 hover:text-purple-600 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div id="highPriorityContainer" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                <!-- High priority items will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories Summary Modal -->
+    <div id="categoriesSummaryModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-md p-8 card-shadow">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-purple-900">Suas Categorias</h3>
+                <button id="closeCategoriesSummaryModalBtn" class="text-gray-400 hover:text-purple-600 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div id="categoriesSummaryContainer" class="grid grid-cols-1 gap-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                <!-- Categories list will be injected here -->
             </div>
         </div>
     </div>

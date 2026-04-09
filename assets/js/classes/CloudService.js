@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
     getFirestore, doc, setDoc, getDoc, getDocs, collection, 
-    deleteDoc, onSnapshot, updateDoc 
+    deleteDoc, onSnapshot, updateDoc, query, where 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { 
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
@@ -84,6 +84,23 @@ export class CloudService {
         return true;
     }
 
+    async getProjectMembers() {
+        if (!this.projectId) return [];
+        try {
+            const usersRef = collection(this.db, 'users');
+            const q = query(usersRef, where('projectId', '==', this.projectId));
+            const querySnapshot = await getDocs(q);
+            const members = [];
+            querySnapshot.forEach((doc) => {
+                members.push(doc.data());
+            });
+            return members;
+        } catch (error) {
+            console.error("Erro ao buscar membros:", error);
+            return [];
+        }
+    }
+
     async saveSettings(settings) {
         if (!this.projectDocRef) return;
         await setDoc(this.projectDocRef, { settings }, { merge: true });
@@ -159,6 +176,10 @@ export class CloudService {
             callback({
                 totalBudget: settings.totalBudget,
                 categories: settings.categories,
+                savingsTarget: settings.savingsTarget || 0,
+                savingsDate: settings.savingsDate || null,
+                savingsFrequency: settings.savingsFrequency || null,
+                savingsGrid: settings.savingsGrid || [],
                 rooms: rooms,
                 items: allItems,
                 projectId: this.projectId // Retorna o ID para exibir na UI

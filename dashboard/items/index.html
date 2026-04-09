@@ -33,6 +33,10 @@
                 <i class="fas fa-palette w-5"></i>
                 <span>Cores e Cômodos</span>
             </a>
+            <a href="../savings/index.html" class="flex items-center space-x-3 p-3 rounded-xl text-gray-500 hover:bg-purple-50 hover:text-purple-600 transition">
+                <i class="fas fa-piggy-bank w-5"></i>
+                <span>Cofrinho</span>
+            </a>
             <button id="openShareModalBtn" class="w-full flex items-center space-x-3 p-3 rounded-xl text-gray-500 hover:bg-purple-50 hover:text-purple-600 transition">
                 <i class="fas fa-users w-5"></i>
                 <span>Compartilhar</span>
@@ -232,6 +236,18 @@
                     <div class="flex space-x-2 mt-1">
                         <input type="text" id="joinProjectIdInput" placeholder="Cole o código do parceiro" class="flex-1 px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-purple-200 text-sm">
                         <button id="confirmJoinProjectBtn" class="px-4 bg-purple-600 text-white rounded-xl font-bold text-sm hover:bg-purple-700 transition">Conectar</button>
+                    </div>
+                </div>
+
+                <!-- Project Members -->
+                <div id="projectMembersSection" class="pt-4 border-t border-purple-50">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Membros Conectados</label>
+                    <div id="projectMembersList" class="mt-2 space-y-2">
+                        <!-- Members will be injected here -->
+                        <div class="flex items-center space-x-2 p-2 animate-pulse">
+                            <div class="w-8 h-8 rounded-full bg-purple-100"></div>
+                            <div class="h-4 bg-purple-50 rounded w-24"></div>
+                        </div>
                     </div>
                 </div>
             </div>

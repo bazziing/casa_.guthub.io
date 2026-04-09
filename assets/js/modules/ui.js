@@ -252,6 +252,9 @@ export function closeAllModals() {
     closeDeleteConfirmModal('item');
     closeDeleteConfirmModal('room');
     closeRoomsSummaryModal();
+    closePurchasedItemsModal();
+    closeHighPriorityModal();
+    closeCategoriesSummaryModal();
     toggleModal('messageModal', false);
     
     // Fechar sidebar se estiver aberta no mobile
@@ -392,4 +395,228 @@ export function renderRoomsSummary() {
     });
 
     totalEl.textContent = formatCurrency(grandTotal);
+}
+
+export function openPurchasedItemsModal() {
+    renderPurchasedItemsSummary();
+    toggleModal('purchasedItemsModal', true);
+}
+
+export function closePurchasedItemsModal() {
+    toggleModal('purchasedItemsModal', false);
+}
+
+export function renderPurchasedItemsSummary() {
+    const container = document.getElementById('purchasedItemsContainer');
+    const totalEl = document.getElementById('purchasedItemsTotal');
+    if (!container || !totalEl) return;
+
+    container.innerHTML = '';
+    
+    const purchasedItems = state.items.filter(item => item.purchased);
+    
+    if (purchasedItems.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-400 py-8">Nenhum item comprado ainda.</p>';
+        totalEl.textContent = formatCurrency(0);
+        return;
+    }
+
+    let totalGasto = 0;
+
+    purchasedItems.forEach(item => {
+        const price = parseFloat(item.price || 0);
+        totalGasto += price;
+
+        const room = state.rooms.find(r => r.name === item.category);
+        const color = room ? room.primaryColor : '#E2E8F0';
+
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-3 rounded-xl bg-green-50/30 border border-green-100/50';
+        row.innerHTML = `
+            <div class="flex flex-col">
+                <span class="font-bold text-gray-800 text-sm">${item.name}</span>
+                <span class="text-[10px] text-gray-400 font-bold uppercase flex items-center">
+                    <span class="w-2 h-2 rounded-full mr-1" style="background-color: ${color}"></span>
+                    ${item.category}
+                </span>
+            </div>
+            <span class="font-mono font-bold text-green-600 text-sm">${formatCurrency(price)}</span>
+        `;
+        container.appendChild(row);
+    });
+
+    totalEl.textContent = formatCurrency(totalGasto);
+}
+
+export function openHighPriorityModal() {
+    renderHighPriorityItems();
+    toggleModal('highPriorityModal', true);
+}
+
+export function closeHighPriorityModal() {
+    toggleModal('highPriorityModal', false);
+}
+
+export function renderHighPriorityItems() {
+    const container = document.getElementById('highPriorityContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+    
+    const highPriorityItems = state.items.filter(item => item.priority === 'high' && !item.purchased);
+    
+    if (highPriorityItems.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-400 py-8">Nenhum item pendente de alta prioridade.</p>';
+        return;
+    }
+
+    highPriorityItems.forEach(item => {
+        const room = state.rooms.find(r => r.name === item.category);
+        const color = room ? room.primaryColor : '#E2E8F0';
+
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-3 rounded-xl bg-yellow-50/30 border border-yellow-100/50';
+        row.innerHTML = `
+            <div class="flex flex-col">
+                <span class="font-bold text-gray-800 text-sm">${item.name}</span>
+                <span class="text-[10px] text-gray-400 font-bold uppercase flex items-center">
+                    <span class="w-2 h-2 rounded-full mr-1" style="background-color: ${color}"></span>
+                    ${item.category}
+                </span>
+            </div>
+            <span class="font-mono font-bold text-yellow-600 text-sm">${formatCurrency(parseFloat(item.price))}</span>
+        `;
+        container.appendChild(row);
+    });
+}
+
+export function openCategoriesSummaryModal() {
+    renderCategoriesSummary();
+    toggleModal('categoriesSummaryModal', true);
+}
+
+export function closeCategoriesSummaryModal() {
+    toggleModal('categoriesSummaryModal', false);
+}
+
+export function renderCategoriesSummary() {
+    const container = document.getElementById('categoriesSummaryContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+    
+    if (state.rooms.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-400 py-8">Nenhuma categoria (cômodo) cadastrada.</p>';
+        return;
+    }
+
+    state.rooms.forEach(room => {
+        const itemCount = state.items.filter(i => i.category === room.name).length;
+        const purchasedCount = state.items.filter(i => i.category === room.name && i.purchased).length;
+        const progress = itemCount > 0 ? (purchasedCount / itemCount) * 100 : 0;
+
+        const card = document.createElement('div');
+        card.className = 'p-4 rounded-2xl bg-purple-50/50 border border-purple-100';
+        card.innerHTML = `
+            <div class="flex justify-between items-center mb-2">
+                <div class="flex items-center space-x-3">
+                    <div class="w-3 h-3 rounded-full" style="background-color: ${room.primaryColor}"></div>
+                    <span class="font-bold text-purple-900">${room.name}</span>
+                </div>
+                <span class="text-[10px] font-bold text-purple-400 uppercase">${purchasedCount}/${itemCount} itens</span>
+            </div>
+            <div class="w-full bg-purple-100 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-purple-600 h-full transition-all duration-500" style="width: ${progress}%"></div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+export function renderSavingsGrid() {
+    const gridContainer = document.getElementById('savingsGrid');
+    const container = document.getElementById('savingsContainer');
+    const setupSection = document.getElementById('savingsSetup');
+    const summarySection = document.getElementById('savingsSummary');
+    const emptyState = document.getElementById('emptySavingsState');
+    
+    if (!gridContainer) return;
+
+    if (!state.savingsGrid || state.savingsGrid.length === 0) {
+        if (container) container.classList.add('hidden');
+        if (summarySection) summarySection.classList.add('hidden');
+        if (setupSection) setupSection.classList.remove('hidden');
+        if (emptyState) emptyState.classList.remove('hidden');
+        
+        // Pre-fill inputs if state has data
+        const targetInput = document.getElementById('savingsTargetInput');
+        if (targetInput && state.savingsTarget) targetInput.value = state.savingsTarget;
+        
+        return;
+    }
+
+    if (container) container.classList.remove('hidden');
+    if (summarySection) summarySection.classList.remove('hidden');
+    if (setupSection) setupSection.classList.add('hidden');
+    if (emptyState) emptyState.classList.add('hidden');
+
+    gridContainer.innerHTML = '';
+    
+    let totalSaved = 0;
+    state.savingsGrid.forEach((cell, index) => {
+        if (cell.completed) totalSaved += cell.value;
+        
+        const cellEl = document.createElement('div');
+        cellEl.className = `savings-cell ${cell.completed ? 'completed' : 'pending'}`;
+        cellEl.dataset.index = index;
+        
+        cellEl.innerHTML = `
+            <i class="fas fa-check-circle"></i>
+            <span class="text-[10px] font-bold opacity-70">${index + 1}</span>
+            <span class="text-xs font-black">${formatCurrency(cell.value)}</span>
+        `;
+        
+        gridContainer.appendChild(cellEl);
+    });
+
+    // Update Summary
+    const totalSavedDisplay = document.getElementById('totalSavedDisplay');
+    const progressDisplay = document.getElementById('savingsProgressDisplay');
+    const remainingDisplay = document.getElementById('remainingToSaveDisplay');
+
+    if (totalSavedDisplay) totalSavedDisplay.textContent = formatCurrency(totalSaved);
+    
+    const progress = state.savingsTarget > 0 ? (totalSaved / state.savingsTarget) * 100 : 0;
+    if (progressDisplay) progressDisplay.textContent = `${progress.toFixed(1)}%`;
+    
+    const remaining = state.savingsTarget - totalSaved;
+    if (remainingDisplay) remainingDisplay.textContent = formatCurrency(remaining);
+}
+
+export function renderProjectMembers(members, currentUserEmail) {
+    const listContainer = document.getElementById('projectMembersList');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '';
+    
+    if (members.length === 0) {
+        listContainer.innerHTML = '<p class="text-[10px] text-gray-400 italic">Nenhum membro encontrado.</p>';
+        return;
+    }
+
+    members.forEach(member => {
+        const isMe = member.email === currentUserEmail;
+        const memberEl = document.createElement('div');
+        memberEl.className = 'flex items-center space-x-3 p-2 rounded-xl bg-purple-50/50 border border-purple-100/50';
+        memberEl.innerHTML = `
+            <div class="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center shrink-0">
+                <i class="fas fa-user text-purple-600 text-xs"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-xs font-bold text-purple-900 truncate">${member.email}</p>
+                <p class="text-[10px] text-purple-400 font-medium">${isMe ? '(Você)' : (member.role === 'owner' ? 'Proprietário' : 'Convidado')}</p>
+            </div>
+        `;
+        listContainer.appendChild(memberEl);
+    });
 }

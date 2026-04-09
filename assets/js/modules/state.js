@@ -6,6 +6,10 @@ export const state = {
     totalBudget: 0,
     currentSpending: 0,
     totalEstimated: 0,
+    savingsTarget: 0,
+    savingsDate: null,
+    savingsFrequency: null,
+    savingsGrid: [],
     itemToDelete: null,
     roomToDelete: null
 };

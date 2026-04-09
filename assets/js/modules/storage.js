@@ -6,6 +6,10 @@ export function loadItemsFromLocalStorage() {
     const savedCategories = localStorage.getItem('weddingHomeCategories');
     const savedRooms = localStorage.getItem('weddingHomeRooms');
     const savedBudget = localStorage.getItem('weddingHomeBudget');
+    const savedSavingsTarget = localStorage.getItem('weddingHomeSavingsTarget');
+    const savedSavingsDate = localStorage.getItem('weddingHomeSavingsDate');
+    const savedSavingsFrequency = localStorage.getItem('weddingHomeSavingsFrequency');
+    const savedSavingsGrid = localStorage.getItem('weddingHomeSavingsGrid');
    
     if (savedItems) {
         state.items = JSON.parse(savedItems);
@@ -25,6 +29,11 @@ export function loadItemsFromLocalStorage() {
             elements.totalBudget.value = formatCurrency(state.totalBudget);
         }
     }
+    
+    if (savedSavingsTarget) state.savingsTarget = parseFloat(savedSavingsTarget);
+    if (savedSavingsDate) state.savingsDate = savedSavingsDate;
+    if (savedSavingsFrequency) state.savingsFrequency = savedSavingsFrequency;
+    if (savedSavingsGrid) state.savingsGrid = JSON.parse(savedSavingsGrid);
 }
 
 export function saveItemsToLocalStorage() {
@@ -32,4 +41,9 @@ export function saveItemsToLocalStorage() {
     localStorage.setItem('weddingHomeCategories', JSON.stringify(state.categories));
     localStorage.setItem('weddingHomeRooms', JSON.stringify(state.rooms));
     localStorage.setItem('weddingHomeBudget', state.totalBudget.toString());
+    
+    localStorage.setItem('weddingHomeSavingsTarget', state.savingsTarget.toString());
+    localStorage.setItem('weddingHomeSavingsDate', state.savingsDate || '');
+    localStorage.setItem('weddingHomeSavingsFrequency', state.savingsFrequency || '');
+    localStorage.setItem('weddingHomeSavingsGrid', JSON.stringify(state.savingsGrid || []));
 }
