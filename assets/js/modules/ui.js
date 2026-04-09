@@ -41,7 +41,17 @@ export function updateDashboard() {
 
     const highPriorityItemsEl = document.getElementById('highPriorityItems');
     if (highPriorityItemsEl) {
-        highPriorityItemsEl.textContent = state.items.filter(item => item.priority === 'high').length;
+        highPriorityItemsEl.textContent = state.items.filter(item => item.priority === 'high' && !item.purchased).length;
+    }
+
+    const mediumPriorityItemsEl = document.getElementById('mediumPriorityItems');
+    if (mediumPriorityItemsEl) {
+        mediumPriorityItemsEl.textContent = state.items.filter(item => item.priority === 'medium' && !item.purchased).length;
+    }
+
+    const lowPriorityItemsEl = document.getElementById('lowPriorityItems');
+    if (lowPriorityItemsEl) {
+        lowPriorityItemsEl.textContent = state.items.filter(item => item.priority === 'low' && !item.purchased).length;
     }
 
     const totalCategoriesEl = document.getElementById('totalCategories');
@@ -475,7 +485,7 @@ export function renderHighPriorityItems() {
         const color = room ? room.primaryColor : '#E2E8F0';
 
         const row = document.createElement('div');
-        row.className = 'flex items-center justify-between p-3 rounded-xl bg-yellow-50/30 border border-yellow-100/50';
+        row.className = 'flex items-center justify-between p-3 rounded-xl bg-orange-50/30 border border-orange-100/50';
         row.innerHTML = `
             <div class="flex flex-col">
                 <span class="font-bold text-gray-800 text-sm">${item.name}</span>
@@ -484,7 +494,91 @@ export function renderHighPriorityItems() {
                     ${item.category}
                 </span>
             </div>
-            <span class="font-mono font-bold text-yellow-600 text-sm">${formatCurrency(parseFloat(item.price))}</span>
+            <span class="font-mono font-bold text-orange-600 text-sm">${formatCurrency(parseFloat(item.price))}</span>
+        `;
+        container.appendChild(row);
+    });
+}
+
+export function openMediumPriorityModal() {
+    renderMediumPriorityItems();
+    toggleModal('mediumPriorityModal', true);
+}
+
+export function closeMediumPriorityModal() {
+    toggleModal('mediumPriorityModal', false);
+}
+
+export function renderMediumPriorityItems() {
+    const container = document.getElementById('mediumPriorityContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+    
+    const items = state.items.filter(item => item.priority === 'medium' && !item.purchased);
+    
+    if (items.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-400 py-8">Nenhum item pendente de média prioridade.</p>';
+        return;
+    }
+
+    items.forEach(item => {
+        const room = state.rooms.find(r => r.name === item.category);
+        const color = room ? room.primaryColor : '#E2E8F0';
+
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-3 rounded-xl bg-amber-50/30 border border-amber-100/50';
+        row.innerHTML = `
+            <div class="flex flex-col">
+                <span class="font-bold text-gray-800 text-sm">${item.name}</span>
+                <span class="text-[10px] text-gray-400 font-bold uppercase flex items-center">
+                    <span class="w-2 h-2 rounded-full mr-1" style="background-color: ${color}"></span>
+                    ${item.category}
+                </span>
+            </div>
+            <span class="font-mono font-bold text-amber-600 text-sm">${formatCurrency(parseFloat(item.price))}</span>
+        `;
+        container.appendChild(row);
+    });
+}
+
+export function openLowPriorityModal() {
+    renderLowPriorityItems();
+    toggleModal('lowPriorityModal', true);
+}
+
+export function closeLowPriorityModal() {
+    toggleModal('lowPriorityModal', false);
+}
+
+export function renderLowPriorityItems() {
+    const container = document.getElementById('lowPriorityContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+    
+    const items = state.items.filter(item => item.priority === 'low' && !item.purchased);
+    
+    if (items.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-400 py-8">Nenhum item pendente de baixa prioridade.</p>';
+        return;
+    }
+
+    items.forEach(item => {
+        const room = state.rooms.find(r => r.name === item.category);
+        const color = room ? room.primaryColor : '#E2E8F0';
+
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-3 rounded-xl bg-blue-50/30 border border-blue-100/50';
+        row.innerHTML = `
+            <div class="flex flex-col">
+                <span class="font-bold text-gray-800 text-sm">${item.name}</span>
+                <span class="text-[10px] text-gray-400 font-bold uppercase flex items-center">
+                    <span class="w-2 h-2 rounded-full mr-1" style="background-color: ${color}"></span>
+                    ${item.category}
+                </span>
+            </div>
+            <span class="font-mono font-bold text-blue-600 text-sm">${formatCurrency(parseFloat(item.price))}</span>
         `;
         container.appendChild(row);
     });

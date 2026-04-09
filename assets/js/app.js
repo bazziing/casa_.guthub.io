@@ -12,6 +12,8 @@ import {
     openRoomsSummaryModal, closeRoomsSummaryModal,
     openPurchasedItemsModal, closePurchasedItemsModal,
     openHighPriorityModal, closeHighPriorityModal,
+    openMediumPriorityModal, closeMediumPriorityModal,
+    openLowPriorityModal, closeLowPriorityModal,
     openCategoriesSummaryModal, closeCategoriesSummaryModal,
     renderSavingsGrid
 } from './modules/ui.js';
@@ -240,6 +242,20 @@ function addEventListeners() {
 
     const closeHighPriorityModalBtn = document.getElementById('closeHighPriorityModalBtn');
     if (closeHighPriorityModalBtn) closeHighPriorityModalBtn.onclick = closeHighPriorityModal;
+
+    // Média Prioridade
+    const openMediumPriorityModalBtn = document.getElementById('openMediumPriorityModalBtn');
+    if (openMediumPriorityModalBtn) openMediumPriorityModalBtn.onclick = openMediumPriorityModal;
+
+    const closeMediumPriorityModalBtn = document.getElementById('closeMediumPriorityModalBtn');
+    if (closeMediumPriorityModalBtn) closeMediumPriorityModalBtn.onclick = closeMediumPriorityModal;
+
+    // Baixa Prioridade
+    const openLowPriorityModalBtn = document.getElementById('openLowPriorityModalBtn');
+    if (openLowPriorityModalBtn) openLowPriorityModalBtn.onclick = openLowPriorityModal;
+
+    const closeLowPriorityModalBtn = document.getElementById('closeLowPriorityModalBtn');
+    if (closeLowPriorityModalBtn) closeLowPriorityModalBtn.onclick = closeLowPriorityModal;
 
     // Resumo de Categorias
     const openCategoriesSummaryModalBtn = document.getElementById('openCategoriesSummaryModalBtn');
