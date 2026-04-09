@@ -137,16 +137,16 @@ input[type="color"]::-moz-color-swatch {
 .priority-medium { border-left: 4px solid #ffd166; }
 .priority-low { border-left: 4px solid #a0e8af; }
 
-/* Proteção de Rota: Esconde o conteúdo até confirmar login */
+/* Proteção de Rota: Suaviza a transição inicial */
 [data-auth-required] {
-    opacity: 0;
-    transition: opacity 0.4s ease;
-    pointer-events: none;
+    opacity: 1; /* Mudado de 0 para 1 para permitir renderização local imediata */
+    transition: opacity 0.3s ease;
 }
 
-[data-auth-required].auth-ready {
-    opacity: 1;
-    pointer-events: auto;
+/* O conteúdo só é bloqueado se explicitamente deslogado (tratado via JS) */
+body.auth-loading [data-auth-required] {
+    opacity: 0.5;
+    pointer-events: none;
 }
 
 /* Loader de Segurança */
@@ -158,4 +158,10 @@ input[type="color"]::-moz-color-swatch {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+#auth-guard-loader.hidden {
+    opacity: 0;
+    visibility: hidden;
 }

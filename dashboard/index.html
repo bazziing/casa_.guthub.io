@@ -6,6 +6,8 @@
     <title>Geral - Casa dos Sonhos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/nano.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body class="bg-[#f9f7fe] min-h-screen flex" data-auth-required>
@@ -33,6 +35,10 @@
                 <i class="fas fa-palette w-5"></i>
                 <span>Cores e Cômodos</span>
             </a>
+            <button id="openShareModalBtn" class="w-full flex items-center space-x-3 p-3 rounded-xl text-gray-500 hover:bg-purple-50 hover:text-purple-600 transition">
+                <i class="fas fa-users w-5"></i>
+                <span>Compartilhar</span>
+            </button>
         </nav>
         <div class="p-4 border-t border-purple-50">
             <div class="flex items-center space-x-3 mb-4 p-2">
@@ -91,15 +97,15 @@
 
                 <!-- Stats Grid -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    <div class="bg-white p-6 rounded-2xl card-shadow flex items-center space-x-4 border-l-4 border-purple-200">
-                        <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600 shrink-0">
+                    <button id="openRoomsSummaryBtn" class="bg-white p-6 rounded-2xl card-shadow flex items-center space-x-4 border-l-4 border-purple-200 hover:bg-purple-50 transition text-left group">
+                        <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600 shrink-0 group-hover:scale-110 transition">
                             <i class="fas fa-coins"></i>
                         </div>
                         <div class="min-w-0">
                             <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider truncate">Total Planejado</p>
                             <p id="totalEstimated" class="text-xl font-bold text-purple-900">R$ 0,00</p>
                         </div>
-                    </div>
+                    </button>
                     <div class="bg-white p-6 rounded-2xl card-shadow flex items-center space-x-4 border-l-4 border-green-200">
                         <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-green-600 shrink-0">
                             <i class="fas fa-check-circle"></i>
@@ -136,29 +142,196 @@
                         Ações Rápidas
                     </h2>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <a href="items/index.html" class="flex items-center space-x-4 p-4 rounded-2xl bg-purple-50 hover:bg-purple-100 transition group border border-purple-100/50">
+                        <button id="addItemBtn" class="flex items-center space-x-4 p-4 rounded-2xl bg-purple-50 hover:bg-purple-100 transition group border border-purple-100/50">
                             <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition">
                                 <i class="fas fa-plus text-purple-600"></i>
                             </div>
-                            <div>
+                            <div class="text-left">
                                 <p class="font-bold text-purple-900 text-sm">Novo Item</p>
                                 <p class="text-[10px] text-purple-400 font-medium">Adicione algo à lista</p>
                             </div>
-                        </a>
-                        <a href="rooms/index.html" class="flex items-center space-x-4 p-4 rounded-2xl bg-indigo-50 hover:bg-indigo-100 transition group border border-indigo-100/50">
+                        </button>
+                        <button id="addRoomBtn" class="flex items-center space-x-4 p-4 rounded-2xl bg-indigo-50 hover:bg-indigo-100 transition group border border-indigo-100/50">
                             <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition">
                                 <i class="fas fa-palette text-indigo-600"></i>
                             </div>
-                            <div>
-                                <p class="font-bold text-indigo-900 text-sm">Ver Cores</p>
-                                <p class="text-[10px] text-indigo-400 font-medium">Gerencie seus ambientes</p>
+                            <div class="text-left">
+                                <p class="font-bold text-indigo-900 text-sm">Novo Cômodo</p>
+                                <p class="text-[10px] text-indigo-400 font-medium">Defina cores para ambientes</p>
                             </div>
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </main>
+
+    <!-- Modal Add Item -->
+    <div id="addItemModal" class="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-md p-8 card-shadow">
+            <h3 class="text-xl font-bold text-purple-900 mb-6">Novo Item</h3>
+            <form id="itemForm" class="space-y-4">
+                <input type="hidden" id="editItemId">
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase ml-1">Nome do Produto</label>
+                    <input type="text" id="itemName" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Categoria</label>
+                        <div class="flex space-x-2">
+                            <select id="itemCategory" class="flex-1 px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200 text-sm" required></select>
+                            <button type="button" id="addCategoryBtn" class="px-3 bg-purple-100 text-purple-600 rounded-xl hover:bg-purple-200">+</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Prioridade</label>
+                        <select id="itemPriority" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200 text-sm">
+                            <option value="low">Baixa</option>
+                            <option value="medium" selected>Média</option>
+                            <option value="high">Alta</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Preço Estimado</label>
+                        <input type="number" id="itemPrice" step="0.01" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Link (Opcional)</label>
+                        <div class="flex space-x-2">
+                            <input type="url" id="itemLink" class="flex-1 px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200 text-sm" placeholder="Cole o link aqui">
+                            <button type="button" id="fetchLinkDataBtn" class="px-3 bg-purple-100 text-purple-600 rounded-xl hover:bg-purple-200 transition" title="Buscar dados automaticamente">
+                                <i class="fas fa-magic"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex space-x-3 pt-6">
+                    <button type="button" id="cancelItemBtn" class="flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Cancelar</button>
+                    <button type="submit" class="flex-1 py-3 bg-purple-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-purple-200 hover:bg-purple-700 transition">Salvar Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Add Category -->
+    <div id="addCategoryModal" class="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-xs p-8 card-shadow text-center">
+            <h3 class="text-xl font-bold text-purple-900 mb-6">Nova Categoria</h3>
+            <form id="categoryForm" class="space-y-4">
+                <input type="text" id="newCategoryName" placeholder="Ex: Cozinha" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
+                <div class="flex space-x-2 pt-4">
+                    <button type="button" id="cancelCategoryBtn" class="flex-1 py-3 text-gray-400 text-sm font-bold hover:bg-gray-50 rounded-2xl transition">Cancelar</button>
+                    <button type="submit" class="flex-1 py-3 bg-purple-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-purple-200 hover:bg-purple-700 transition">Criar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Add Room -->
+    <div id="addRoomModal" class="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-md p-8 card-shadow">
+            <h3 class="text-xl font-bold text-purple-900 mb-6" id="roomModalTitle">Novo Cômodo</h3>
+            <form id="roomForm" class="space-y-6">
+                <input type="hidden" id="editRoomId">
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase ml-1">Nome do Cômodo</label>
+                    <input type="text" id="roomName" placeholder="Ex: Suíte Principal" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="flex flex-col">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Principal</label>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <div id="primaryColorPicker"></div>
+                                <input type="text" id="primaryColorHex" class="w-full text-xs border-b border-purple-100 outline-none uppercase" value="#8B5CF6">
+                            </div>
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Destaque</label>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <div id="accentColorPicker"></div>
+                                <input type="text" id="accentColorHex" class="w-full text-xs border-b border-purple-100 outline-none uppercase" value="#FACC15">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex flex-col">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Secundária</label>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <div id="secondaryColorPicker"></div>
+                                <input type="text" id="secondaryColorHex" class="w-full text-xs border-b border-purple-100 outline-none uppercase" value="#2DD4BF">
+                            </div>
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Neutra</label>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <div id="neutralColorPicker"></div>
+                                <input type="text" id="neutralColorHex" class="w-full text-xs border-b border-purple-100 outline-none uppercase" value="#FFFFFF">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" id="cancelRoomBtn" class="flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Cancelar</button>
+                    <button type="submit" class="flex-1 py-3 bg-purple-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-purple-200 hover:bg-purple-700 transition">Salvar Cômodo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="shareModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-md p-8 card-shadow">
+            <div class="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-users text-purple-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-purple-900 text-center mb-2">Compartilhar Lista</h3>
+            <p class="text-gray-500 text-center mb-6 text-sm">O casal pode acessar a mesma lista usando o código abaixo.</p>
+            
+            <div class="space-y-6">
+                <!-- My Code -->
+                <div class="space-y-3">
+                    <button id="copyProjectIdBtn" class="w-full text-left bg-purple-50 p-4 rounded-2xl border border-purple-100 hover:bg-purple-100 transition group">
+                        <label class="text-[10px] font-bold text-purple-400 uppercase tracking-widest ml-1 cursor-pointer">Seu Código de Acesso</label>
+                        <div class="flex items-center justify-between mt-1">
+                            <span id="displayProjectId" class="font-mono font-bold text-purple-900">Carregando...</span>
+                            <div class="text-purple-600 group-hover:scale-110 transition p-2">
+                                <i class="fas fa-copy"></i>
+                            </div>
+                        </div>
+                    </button>
+                    
+                    <button id="shareWhatsappBtn" class="w-full flex items-center justify-center space-x-2 py-3 bg-green-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-green-100 hover:bg-green-600 transition">
+                        <i class="fab fa-whatsapp text-lg"></i>
+                        <span>Enviar via WhatsApp</span>
+                    </button>
+                </div>
+
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-100"></div></div>
+                    <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-300 font-bold">OU</span></div>
+                </div>
+
+                <!-- Join Code -->
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Entrar em outra lista</label>
+                    <div class="flex space-x-2 mt-1">
+                        <input type="text" id="joinProjectIdInput" placeholder="Cole o código do parceiro" class="flex-1 px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-purple-200 text-sm">
+                        <button id="confirmJoinProjectBtn" class="px-4 bg-purple-600 text-white rounded-xl font-bold text-sm hover:bg-purple-700 transition">Conectar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <button id="closeShareModalBtn" class="w-full py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Fechar</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Logout Confirmation Modal -->
     <div id="logoutModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
@@ -171,6 +344,40 @@
             <div class="flex space-x-3">
                 <button id="cancelLogoutBtn" class="flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Ficar</button>
                 <button id="confirmLogoutBtn" class="flex-1 py-3 bg-red-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-200 hover:bg-red-600 transition text-center">Sair</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rooms Summary Modal -->
+    <div id="roomsSummaryModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-lg p-8 card-shadow">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-purple-900">Resumo por Cômodo</h3>
+                <button id="closeRoomsSummaryModalBtn" class="text-gray-400 hover:text-purple-600 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <div id="roomsSummaryContainer" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                <!-- Room summaries will be injected here -->
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-purple-50 flex justify-between items-center">
+                <span class="text-gray-500 font-bold uppercase text-[10px] tracking-widest">Total Geral</span>
+                <span id="roomsSummaryTotal" class="text-xl font-black text-purple-900">R$ 0,00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Modal (Alert/Confirm) -->
+    <div id="messageModal" class="fixed inset-0 z-[200] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow text-center">
+            <div id="messageIconContainer" class="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-6">
+                <i id="messageIcon" class="fas fa-info-circle text-purple-600 text-2xl"></i>
+            </div>
+            <h3 id="messageTitle" class="text-xl font-bold text-purple-900 mb-2">Aviso</h3>
+            <p id="messageContent" class="text-gray-500 mb-8 leading-relaxed">Mensagem aqui...</p>
+            <div id="messageActions" class="flex space-x-3">
+                <button id="messageCancelBtn" class="hidden flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Cancelar</button>
+                <button id="messageConfirmBtn" class="flex-1 py-3 bg-purple-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-purple-200 hover:bg-purple-700 transition">Entendi</button>
             </div>
         </div>
     </div>

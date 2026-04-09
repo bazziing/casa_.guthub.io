@@ -201,6 +201,13 @@ export function closeAddCategoryModal() { toggleModal('addCategoryModal', false)
 export function openLogoutModal() { toggleModal('logoutModal', true); }
 export function closeLogoutModal() { toggleModal('logoutModal', false); }
 
+export function openShareModal(projectId) {
+    const displayEl = document.getElementById('displayProjectId');
+    if (displayEl) displayEl.textContent = projectId;
+    toggleModal('shareModal', true);
+}
+export function closeShareModal() { toggleModal('shareModal', false); }
+
 export function openDeleteConfirmModal(type) { 
     const id = type === 'item' ? 'deleteItemModal' : 'deleteRoomModal';
     toggleModal(id, true); 
@@ -234,4 +241,155 @@ export function toggleSidebar() {
     const overlay = document.querySelector('.sidebar-overlay');
     sidebar?.classList.toggle('active');
     overlay?.classList.toggle('active');
+}
+
+export function closeAllModals() {
+    closeAddItemModal();
+    closeAddRoomModal();
+    closeAddCategoryModal();
+    closeLogoutModal();
+    closeShareModal();
+    closeDeleteConfirmModal('item');
+    closeDeleteConfirmModal('room');
+    closeRoomsSummaryModal();
+    toggleModal('messageModal', false);
+    
+    // Fechar sidebar se estiver aberta no mobile
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    if (sidebar?.classList.contains('active')) {
+        sidebar.classList.remove('active');
+        overlay?.classList.remove('active');
+    }
+}
+
+export function showAlert(message, title = 'Aviso', type = 'info', timeout = 0) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('messageModal');
+        const titleEl = document.getElementById('messageTitle');
+        const contentEl = document.getElementById('messageContent');
+        const confirmBtn = document.getElementById('messageConfirmBtn');
+        const cancelBtn = document.getElementById('messageCancelBtn');
+        const icon = document.getElementById('messageIcon');
+        const iconContainer = document.getElementById('messageIconContainer');
+
+        if (!modal) { console.warn("Modal de mensagem não encontrado"); resolve(); return; }
+
+        titleEl.textContent = title;
+        contentEl.textContent = message;
+        cancelBtn.classList.add('hidden');
+        confirmBtn.textContent = 'Entendi';
+        confirmBtn.classList.remove('hidden');
+        
+        // Estilo baseado no tipo
+        if (type === 'error') {
+            icon.className = 'fas fa-exclamation-circle text-red-500 text-2xl';
+            iconContainer.className = 'w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-6';
+            confirmBtn.className = 'flex-1 py-3 bg-red-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-200 hover:bg-red-600 transition';
+        } else if (type === 'success') {
+            icon.className = 'fas fa-check-circle text-green-500 text-2xl';
+            iconContainer.className = 'w-16 h-16 rounded-2xl bg-green-50 flex items-center justify-center mx-auto mb-6';
+            confirmBtn.className = 'flex-1 py-3 bg-green-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-green-200 hover:bg-green-700 transition';
+        } else {
+            icon.className = 'fas fa-info-circle text-purple-600 text-2xl';
+            iconContainer.className = 'w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-6';
+            confirmBtn.className = 'flex-1 py-3 bg-purple-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-purple-200 hover:bg-purple-700 transition';
+        }
+
+        const handleConfirm = () => {
+            if (autoCloseTimeout) clearTimeout(autoCloseTimeout);
+            toggleModal('messageModal', false);
+            confirmBtn.removeEventListener('click', handleConfirm);
+            resolve();
+        };
+
+        confirmBtn.addEventListener('click', handleConfirm);
+        toggleModal('messageModal', true);
+
+        // Fechamento automático se timeout for definido
+        let autoCloseTimeout = null;
+        if (timeout > 0) {
+            confirmBtn.classList.add('hidden'); // Esconde o botão se for auto-close
+            autoCloseTimeout = setTimeout(handleConfirm, timeout);
+        }
+    });
+}
+
+export function showConfirm(message, title = 'Confirmar', confirmText = 'Sim, continuar') {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('messageModal');
+        const titleEl = document.getElementById('messageTitle');
+        const contentEl = document.getElementById('messageContent');
+        const confirmBtn = document.getElementById('messageConfirmBtn');
+        const cancelBtn = document.getElementById('messageCancelBtn');
+        const icon = document.getElementById('messageIcon');
+        const iconContainer = document.getElementById('messageIconContainer');
+
+        if (!modal) { resolve(false); return; }
+
+        titleEl.textContent = title;
+        contentEl.textContent = message;
+        cancelBtn.classList.remove('hidden');
+        confirmBtn.textContent = confirmText;
+        
+        icon.className = 'fas fa-question-circle text-purple-600 text-2xl';
+        iconContainer.className = 'w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-6';
+        confirmBtn.className = 'flex-1 py-3 bg-purple-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-purple-200 hover:bg-purple-700 transition';
+
+        const onConfirm = () => { cleanup(); resolve(true); };
+        const onCancel = () => { cleanup(); resolve(false); };
+
+        const cleanup = () => {
+            toggleModal('messageModal', false);
+            confirmBtn.removeEventListener('click', onConfirm);
+            cancelBtn.removeEventListener('click', onCancel);
+        };
+
+        confirmBtn.addEventListener('click', onConfirm);
+        cancelBtn.addEventListener('click', onCancel);
+        toggleModal('messageModal', true);
+    });
+}
+
+export function openRoomsSummaryModal() {
+    renderRoomsSummary();
+    toggleModal('roomsSummaryModal', true);
+}
+
+export function closeRoomsSummaryModal() {
+    toggleModal('roomsSummaryModal', false);
+}
+
+export function renderRoomsSummary() {
+    const container = document.getElementById('roomsSummaryContainer');
+    const totalEl = document.getElementById('roomsSummaryTotal');
+    if (!container || !totalEl) return;
+
+    container.innerHTML = '';
+    
+    if (state.rooms.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-400 py-8">Nenhum cômodo cadastrado.</p>';
+        totalEl.textContent = formatCurrency(0);
+        return;
+    }
+
+    let grandTotal = 0;
+
+    state.rooms.forEach(room => {
+        const roomTotal = parseFloat(room.totalEstimated || 0);
+        grandTotal += roomTotal;
+
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-4 rounded-2xl bg-purple-50/50 border border-purple-100';
+        row.innerHTML = `
+            <div class="flex items-center space-x-3">
+                <div class="w-3 h-3 rounded-full" style="background-color: ${room.primaryColor}"></div>
+                <span class="font-bold text-purple-900">${room.name}</span>
+            </div>
+            <span class="font-mono font-bold text-purple-600">${formatCurrency(roomTotal)}</span>
+        `;
+        container.appendChild(row);
+    });
+
+    totalEl.textContent = formatCurrency(grandTotal);
 }

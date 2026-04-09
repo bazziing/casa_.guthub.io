@@ -10,6 +10,7 @@ O projeto utiliza uma arquitetura **Serverless** com foco em performance e simpl
 - **Frontend:** HTML5, Tailwind CSS (via CDN) e Vanilla CSS.
 - **Lógica:** JavaScript Moderno (ES6+) utilizando **Módulos (ESM)**.
 - **Backend/Storage:** Firebase (via classe `CloudService.js`) para Autenticação e Firestore para persistência em tempo real.
+- **Estado Global Reativo (Proxy):** O arquivo `state.js` utiliza um **Proxy JavaScript** para acessar elementos do DOM pelo ID (`elements.ID_DO_ELEMENTO`). Isso evita erros de referência nula em diferentes páginas e centraliza o estado da aplicação.
 - **Configuração de Conexão:** O arquivo `assets/js/modules/firebase-config.js` centraliza as credenciais do projeto Firebase.
 - **Offline First:** Uso de `localStorage` para cache rápido e persistência temporária através de `storage.js`.
 
@@ -18,12 +19,14 @@ A aplicação consome os seguintes recursos via CDN:
 - **Tailwind CSS:** Framework utilitário de estilos.
 - **Font Awesome 6.4.0:** Biblioteca de ícones (Solid, Regular).
 - **Google Fonts:** Família 'Montserrat' (pesos 300 a 900).
+- **Pickr (Nano theme):** Biblioteca para o seletor de cores personalizado com suporte a HVS e EyeDropper (conta-gotas).
+- **Microlink API:** Utilizada para extração de metadados de links externos.
 
-## 4. Estrutura de Diretórios
+## 4. Estrutura de Diretórios Completa
 ```text
 /
 ├── index.html              # Landing page informativa
-├── PROJETO.md              # Esta documentação
+├── PROJETO.md              # Esta documentação mestre
 ├── auth/                   # Fluxos de Autenticação
 │   ├── login/index.html    # Página de Login
 │   ├── signup/index.html   # Página de Cadastro
@@ -40,7 +43,7 @@ A aplicação consome os seguintes recursos via CDN:
 │       ├── auth-login.js   # Lógica específica de login
 │       ├── auth-signup.js  # Lógica específica de cadastro
 │       ├── landing.js      # Lógica da landing page
-│       ├── classes/        # Lógica de negócio (CloudService)
+│       ├── classes/        # Lógica de negócio (CloudService.js)
 │       └── modules/        # Funcionalidades modularizadas
 │           ├── state.js    # Estado global centralizado (Proxy)
 │           ├── ui.js       # Renderização e manipulação de DOM
@@ -56,44 +59,44 @@ A aplicação consome os seguintes recursos via CDN:
 - **Componentes de UI:**
   - **Cards:** Bordas arredondadas de `2xl` ou `3xl`, sombras suaves (`card-shadow`).
   - **Modais:** Padronizados com `backdrop-blur-sm`, fundo `bg-purple-900/20`, cantos `rounded-[2rem]`.
-  - **Animações:** Transições de escala e opacidade via CSS (`cubic-bezier`) para modais e menus.
-- **Responsividade:** Sidebar retrátil no mobile (`transform: translateX`) e grid adaptativo (`auto-grid`).
-- **Empty States:** Containers com ID `emptyState` (itens) e `emptyRoomsState` (cômodos) que aparecem automaticamente quando não há dados.
+- **Responsividade Crítica:**
+  - **Sidebar Mobile:** Fixa com preenchimento extra no fundo (`safe-area-inset-bottom`) para evitar cortes por barras de ferramentas mobile.
+  - **Dashboard Grid:** Layout adaptável usando `lg:grid-cols-4` para estatísticas.
 
 ## 6. Funcionalidades Detalhadas
 ### 6.1. Gestão de Orçamento
-- Campo "Orçamento Total" editável com formatação automática.
-- `onfocus`: Exibe o número puro para edição.
-- `onblur`: Formata para o padrão brasileiro (`R$ 0,00`) usando `Intl.NumberFormat`.
-- Sincronização automática com Firebase após edição.
+- Campo "Orçamento Total" editável com formatação automática BRL (`Intl.NumberFormat`).
+- Sincronização automática e persistência na nuvem após cada alteração (`onblur`).
 
 ### 6.2. Lista de Itens (CRUD)
 - Atributos: Nome, Cômodo, Prioridade, Preço e Link opcional.
-- Sistema de "Check" para compras que atualiza instantaneamente o progresso do orçamento e os "Stats".
+- Sistema de "Check" que recalcula instantaneamente o progresso do orçamento e estatísticas.
 
-### 6.3. Cômodos e Cores
-- Definição de paletas por ambiente.
-- **Sincronização de Cores:** Implementado em `syncColorInputs()` para espelhar valores entre o seletor visual e o campo Hexadecimal.
-- **Exclusão Segura:** Impede a remoção de cômodos que ainda possuam itens vinculados.
+### 6.3. Link Magic Fetch (Automação)
+- Integração com a API **Microlink** para ler links de lojas (Amazon, Magalu, Shopee, etc).
+- **Regex de Preço:** Mineração universal de valores monetários em títulos e metadados.
+- **Limpeza de Nomes:** Filtro inteligente que remove termos de marketing (ex: "Oferta no Magalu") para manter a lista limpa.
 
-### 6.4. Sistema de Modais Customizados
-- Substituição total de `alert()` e `confirm()` por modais HTML/CSS.
-- Modais específicos: `logoutModal`, `deleteItemModal` e `deleteRoomModal`.
-- Classe CSS `modal-hidden` controla a visibilidade e dispara as animações de entrada/saída.
+### 6.4. Cômodos e Cores (Seletor Personalizado)
+- **Pickr Integration:** Seletores de cores idênticos em todas as plataformas com suporte a conta-gotas.
+- **Sincronização Bidirecional:** Mudanças no seletor atualizam o Hexadecimal e vice-versa.
+- **Integridade de Dados:** O sistema **impede a exclusão de cômodos** que possuam itens vinculados, garantindo a consistência do banco de dados.
 
-## 7. Fluxo de Sincronização de Dados
-1. **Init:** `loadLocal()` carrega dados do cache para exibição imediata.
-2. **Auth Change:** Firebase detecta o usuário logado.
-3. **Cloud Load:** `loadFullProject()` sincroniza os dados mais recentes do Firestore para o `state.js`.
-4. **Local Sync:** `saveLocal()` atualiza o `localStorage` com os dados da nuvem.
-5. **UI Update:** O DOM é reconstruído com os dados novos.
-6. **Real-time:** `listenToChanges()` garante que mudanças em outros dispositivos apareçam instantaneamente.
+### 6.5. Colaboração e Compartilhamento
+- **Project ID:** Cada lista possui um ID único que pode ser compartilhado com parceiros/cônjuges.
+- **Join Project:** Funcionalidade para se unir a uma lista existente, permitindo que dois usuários visualizem e editem os mesmos dados em tempo real.
 
-## 8. Segurança e Proteção de Rotas
-- **Atributo `data-auth-required`:** Oculta o conteúdo da página (`opacity: 0`) até que a autenticação seja confirmada, evitando o "flicker" de dados protegidos.
-- **Auth Guard:** O `app.js` redireciona usuários não autenticados para a raiz do projeto. A lógica de redirecionamento é inteligente e ajusta o caminho (`../` ou `../../`) baseada na profundidade da URL atual.
+## 7. Fluxo de Sincronização e Nuvem
+1. **Init:** `loadLocal()` carrega dados do cache (Offline First).
+2. **Auth Change:** Firebase valida a sessão.
+3. **Cloud Load:** Sincroniza dados do Firestore para o `state.js`.
+4. **Real-time:** `listenToChanges()` usa `onSnapshot` para atualizar a UI instantaneamente se outro usuário fizer alterações na mesma lista.
+
+## 8. Segurança e Compatibilidade (GitHub Pages)
+- **Auth Guard:** Conteúdo oculto até a validação da sessão.
+- **Redirecionamento Inteligente:** Lógica de cálculo de profundidade de caminho (`window.location.pathname`) para garantir que o sistema funcione corretamente em subdiretórios no GitHub Pages ou servidores locais.
+- **Case Sensitivity:** Padrão rigoroso de nomes de arquivos para compatibilidade total com sistemas Linux/Unix.
 
 ## 9. Manutenibilidade e Padrões de Código
-- **Estado Global (Proxy):** O `state.js` centraliza todos os dados e o objeto `elements` usa um Proxy para evitar erros de elemento nulo entre páginas.
-- **Event Delegation:** Cliques em listas e containers dinâmicos são gerenciados no nível do pai para eficiência.
-- **Separação de Responsabilidades:** Divisão clara entre lógica de Nuvem (`classes/`), UI (`ui.js`) e Negócio (`events.js`).
+- **Separação de Concerns:** Lógica de Nuvem (`classes/`), UI (`ui.js`) e Eventos (`events.js`) totalmente desacopladas.
+- **Event Delegation:** Gerenciamento eficiente de cliques em listas dinâmicas para melhor performance.

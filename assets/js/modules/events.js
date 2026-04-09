@@ -8,7 +8,8 @@ import {
     closeAddRoomModal, openAddRoomModal,
     closeAddCategoryModal,
     openLogoutModal, closeLogoutModal,
-    openDeleteConfirmModal, closeDeleteConfirmModal
+    openDeleteConfirmModal, closeDeleteConfirmModal,
+    openShareModal, showAlert, showConfirm
 } from './ui.js';
 import { cloudService } from '../classes/CloudService.js';
 
@@ -18,8 +19,8 @@ export async function handleSignup(e) {
     const password = document.getElementById('signupPassword').value;
     try {
         await cloudService.signUp(email, password);
-        alert('Conta criada com sucesso!');
-    } catch (error) { alert('Erro ao criar conta: ' + error.message); }
+        await showAlert('Conta criada com sucesso!', 'Sucesso');
+    } catch (error) { showAlert('Erro ao criar conta: ' + error.message, 'Erro', 'error'); }
 }
 
 export async function handleLogin(e) {
@@ -28,7 +29,7 @@ export async function handleLogin(e) {
     const password = document.getElementById('loginPassword').value;
     try {
         await cloudService.login(email, password);
-    } catch (error) { alert('Erro ao entrar: ' + error.message); }
+    } catch (error) { showAlert('Erro ao entrar: ' + error.message, 'Erro', 'error'); }
 }
 
 export async function handleLogout() { openLogoutModal(); }
@@ -56,7 +57,65 @@ export async function addNewCategory() {
         await cloudService.saveSettings({ totalBudget: state.totalBudget, categories: state.categories });
         closeAddCategoryModal();
     } else if (state.categories.includes(name)) { 
-        alert('Esta categoria já existe!'); 
+        showAlert('Esta categoria já existe!'); 
+    }
+}
+
+export async function fetchLinkData() {
+    const linkInput = document.getElementById('itemLink');
+    const fetchBtn = document.getElementById('fetchLinkDataBtn');
+    const url = linkInput?.value.trim();
+
+    if (!url) { showAlert('Insira um link primeiro!'); return; }
+
+    try {
+        fetchBtn.disabled = true;
+        fetchBtn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
+
+        // Chamada com parâmetros extras para tentar capturar metadados de preço
+        const response = await fetch(`https://api.microlink.io?url=${encodeURIComponent(url)}&data.price.selector=meta[property="product:price:amount"], meta[property="og:price:amount"], .a-price-whole, [itemprop="price"]`);
+        const result = await response.json();
+
+        if (result.status === 'success' && result.data) {
+            let { title, description, price } = result.data;
+            
+            // 1. Tentar capturar o preço de várias fontes (Título, Descrição ou Campo Price da API)
+            // Regex suporta: R$ 1.234,56 | R$1234,56 | 1234.56 | R$ 12,9
+            const priceRegex = /(?:R\$|BRL|Price:?|por)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{1,2}))/i;
+            const priceMatch = title?.match(priceRegex) || description?.match(priceRegex);
+            
+            // 2. Preencher Nome com limpeza profunda
+            if (title && elements.itemName) {
+                let cleanName = title.split(' - ')[0].split(' | ')[0].split(': ')[0]; // Pega a primeira parte mais relevante
+                
+                const junkTerms = [/Magazine Luiza/gi, /no Magalu/gi, /Amazon\.com\.br/gi, /Shopee Brasil/gi, /Netshoes/gi, /Oferta/gi, /Promoção/gi];
+                junkTerms.forEach(term => cleanName = cleanName.replace(term, ''));
+                
+                elements.itemName.value = cleanName.trim();
+            }
+
+            // 3. Preencher Preço (Lógica de mineração universal)
+            if (price) {
+                // Se a API já trouxe um campo price (comum em Netshoes/Shopee se o meta tag existir)
+                let p = typeof price === 'string' ? parseFloat(price.replace(/[^\d.,]/g, '').replace(',', '.')) : price;
+                elements.itemPrice.value = p;
+            } else if (priceMatch) {
+                // Se encontramos via Regex no texto (comum em Amazon/Mercado Livre)
+                let numericStr = priceMatch[1].replace(/\./g, '').replace(',', '.');
+                elements.itemPrice.value = parseFloat(numericStr);
+            }
+
+            if (!title) showAlert('Link lido, mas não consegui extrair o nome automaticamente.');
+        } else {
+            const errorMsg = result.message || 'O site não permitiu a leitura automática.';
+            throw new Error(errorMsg);
+        }
+    } catch (error) {
+        console.error('Erro detalhado:', error);
+        showAlert('Não foi possível ler este link automaticamente (Bloqueio do site). Você pode preencher os campos manualmente.');
+    } finally {
+        fetchBtn.disabled = false;
+        fetchBtn.innerHTML = '<i class="fas fa-magic"></i>';
     }
 }
 
@@ -90,8 +149,13 @@ export async function addOrUpdateItem(e) {
 
     if (!name || !category || isNaN(price)) return;
 
+    if (price < 0) {
+        showAlert("O preço do item não pode ser negativo.", "Erro de Valor", "error");
+        return;
+    }
+
     const room = state.rooms.find(r => r.name === category);
-    if (!room) { alert("Escolha um cômodo válido!"); return; }
+    if (!room) { showAlert("Escolha um cômodo válido!"); return; }
 
     let item;
     if (elements.editItemId?.value) {
@@ -148,6 +212,75 @@ export async function confirmDeleteItem() {
     state.itemToDelete = null;
 }
 
+// COMPARTILHAMENTO
+export function openShare() {
+    openShareModal(cloudService.projectId);
+}
+
+export async function confirmJoinProject() {
+    const targetId = document.getElementById('joinProjectIdInput')?.value.trim();
+    if (!targetId) return;
+
+    // Bloqueio preventivo no Front
+    if (targetId === cloudService.projectId) {
+        showAlert('Este é o seu próprio código. Você só pode se unir a listas de outras pessoas.', 'Ação Inválida');
+        return;
+    }
+
+    const confirmed = await showConfirm('Deseja se unir a esta lista? Seus dados atuais serão substituídos pelos da nova lista.', 'Conectar Lista', 'Sim, Conectar');
+    if (confirmed) {
+        try {
+            await cloudService.joinProject(targetId);
+            await showAlert('Conectado com sucesso!', 'Sucesso');
+            window.location.reload(); // Recarrega para aplicar as mudanças
+        } catch (e) {
+            showAlert('Erro ao conectar: ' + e.message, 'Erro', 'error');
+        }
+    }
+}
+
+export function copyProjectId() {
+    const id = cloudService.projectId;
+    if (!id) return;
+
+    try {
+        // Método Universal (Fallback) - Funciona em todos os navegadores e contextos (HTTP/HTTPS)
+        const textArea = document.createElement("textarea");
+        textArea.value = id;
+        
+        // Esconder o elemento
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "0";
+        textArea.style.opacity = "0";
+        
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+
+        if (successful) {
+            showAlert('Código copiado para a área de transferência!', 'Copiado', 'success', 2000);
+        } else {
+            throw new Error("Comando de cópia falhou");
+        }
+    } catch (err) {
+        console.error('Erro ao copiar:', err);
+        // Fallback final: Mostrar o código para cópia manual
+        showAlert('Não foi possível copiar automaticamente. O código é: ' + id, 'Copia Manual');
+    }
+}
+
+export function shareViaWhatsapp() {
+    const id = cloudService.projectId;
+    if (!id) return;
+
+    const message = encodeURIComponent(`Oi! Este é o código da nossa Casa dos Sonhos no app: ${id}`);
+    window.open(`https://wa.me/?text=${message}`, '_blank');
+}
+
 // CÔMODOS
 export async function addNewRoom() {
     const name = elements.roomName?.value.trim();
@@ -185,7 +318,7 @@ export async function deleteRoom(roomId) {
     
     const hasItems = state.items.some(i => i.category === room.name);
     if (hasItems) {
-        alert('Este cômodo possui itens associados. Remova os itens antes de excluí-lo.');
+        showAlert('Este cômodo possui itens associados. Remova os itens antes de excluí-lo.', 'Ação Bloqueada', 'error');
         return;
     }
 

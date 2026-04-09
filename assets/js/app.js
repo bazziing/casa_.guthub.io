@@ -8,22 +8,40 @@ import {
     openAddRoomModal, closeAddRoomModal,
     openAddCategoryModal, closeAddCategoryModal,
     switchTab, closeLogoutModal, toggleSidebar,
-    closeDeleteConfirmModal
+    closeDeleteConfirmModal, closeShareModal, closeAllModals,
+    openRoomsSummaryModal, closeRoomsSummaryModal
 } from './modules/ui.js';
 import { 
     addOrUpdateItem, addNewCategory, addNewRoom,
     togglePurchasedStatus, editItem, deleteItem, confirmDeleteItem,
     editRoom, deleteRoom, confirmDeleteRoom,
     syncColorInputs,
-    handleLogout, confirmLogout
+    handleLogout, confirmLogout, fetchLinkData,
+    openShare, confirmJoinProject, copyProjectId, shareViaWhatsapp
 } from './modules/events.js';
 import { cloudService } from './classes/CloudService.js';
 
 function init() {
+    // 1. CARREGAMENTO INSTANTÂNEO (OFFLINE FIRST)
     loadLocal();
+    applyCloudData({
+        items: state.items,
+        categories: state.categories,
+        rooms: state.rooms,
+        totalBudget: state.totalBudget
+    });
+
+    // 2. EXIBIÇÃO IMEDIATA (Não espera o Firebase para mostrar a página se já houver dados)
+    const hasData = state.items.length > 0 || state.rooms.length > 0;
+    if (hasData) {
+        document.body.classList.add('auth-ready');
+        const loader = document.getElementById('auth-guard-loader');
+        if (loader) loader.style.display = 'none';
+    }
+
     cloudService.onAuthChange(async (user) => {
         if (!user) {
-            // REDIRECIONAMENTO IMEDIATO
+            // REDIRECIONAMENTO SE DESLOGADO
             const isDashboard = window.location.pathname.includes('/dashboard/');
             if (isDashboard) {
                 window.location.href = window.location.pathname.includes('/items/') || window.location.pathname.includes('/rooms/') 
@@ -33,13 +51,15 @@ function init() {
             return;
         }
 
-        // USUÁRIO LOGADO: Revelar App
+        // SE LOGADO: Confirmar visualização se ainda não estiver ativa
         document.body.classList.add('auth-ready');
         const loader = document.getElementById('auth-guard-loader');
         if (loader) loader.style.display = 'none';
 
         const userEmailEl = document.getElementById('userEmail');
         if (userEmailEl) userEmailEl.textContent = user.email;
+
+        // 3. ATUALIZAÇÃO SILENCIOSA EM SEGUNDO PLANO
         await cloudService.loadFullProject((data) => { applyCloudData(data); });
         cloudService.listenToChanges((data) => { applyCloudData(data); });
     });
@@ -101,7 +121,11 @@ function addEventListeners() {
         };
 
         budgetInput.onblur = async () => {
-            const val = parseFloat(budgetInput.value) || 0;
+            let val = parseFloat(budgetInput.value) || 0;
+            if (val < 0) {
+                await showAlert("O orçamento não pode ser um valor negativo.", "Erro de Valor", "error");
+                val = Math.abs(val);
+            }
             state.totalBudget = val;
             budgetInput.value = formatCurrency(val);
             saveLocal();
@@ -127,6 +151,25 @@ function addEventListeners() {
     if (elements.closeModalBtn) elements.closeModalBtn.onclick = closeAddItemModal;
     if (elements.cancelItemBtn) elements.cancelItemBtn.onclick = closeAddItemModal;
     if (elements.itemForm) elements.itemForm.onsubmit = addOrUpdateItem;
+
+    const fetchBtn = document.getElementById('fetchLinkDataBtn');
+    if (fetchBtn) fetchBtn.onclick = fetchLinkData;
+
+    // Compartilhamento
+    const openShareBtn = document.getElementById('openShareModalBtn');
+    if (openShareBtn) openShareBtn.onclick = openShare;
+
+    const closeShareBtn = document.getElementById('closeShareModalBtn');
+    if (closeShareBtn) closeShareBtn.onclick = closeShareModal;
+
+    const copyCodeBtn = document.getElementById('copyProjectIdBtn');
+    if (copyCodeBtn) copyCodeBtn.onclick = copyProjectId;
+
+    const joinProjectBtn = document.getElementById('confirmJoinProjectBtn');
+    if (joinProjectBtn) joinProjectBtn.onclick = confirmJoinProject;
+
+    const shareWhatsappBtn = document.getElementById('shareWhatsappBtn');
+    if (shareWhatsappBtn) shareWhatsappBtn.onclick = shareViaWhatsapp;
 
     if (elements.addCategoryBtn) elements.addCategoryBtn.onclick = openAddCategoryModal;
     if (elements.closeCategoryModalBtn) elements.closeCategoryModalBtn.onclick = closeAddCategoryModal;
@@ -160,6 +203,18 @@ function addEventListeners() {
         };
     }
     syncColorInputs();
+
+    // Resumo por Cômodo
+    const openRoomsSummaryBtn = document.getElementById('openRoomsSummaryBtn');
+    if (openRoomsSummaryBtn) openRoomsSummaryBtn.onclick = openRoomsSummaryModal;
+
+    const closeRoomsSummaryBtn = document.getElementById('closeRoomsSummaryModalBtn');
+    if (closeRoomsSummaryBtn) closeRoomsSummaryBtn.onclick = closeRoomsSummaryModal;
+
+    // Fechar modais com ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeAllModals();
+    });
 }
 
 document.addEventListener('DOMContentLoaded', init);
