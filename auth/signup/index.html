@@ -16,8 +16,44 @@
         <h2 class="text-2xl font-bold text-purple-900 mb-6">Crie sua conta</h2>
         <form id="signupForm" class="space-y-4">
             <div>
+                <label for="signupName" class="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                <input type="text" id="signupName" class="w-full px-4 py-2 border border-purple-100 rounded-lg outline-none focus:border-purple-300" placeholder="Seu nome" required>
+            </div>
+            <div>
                 <label for="signupEmail" class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
                 <input type="email" id="signupEmail" class="w-full px-4 py-2 border border-purple-100 rounded-lg outline-none focus:border-purple-300" placeholder="seu@email.com" required>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="signupPhone" class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                    <input type="tel" id="signupPhone" class="w-full px-4 py-2 border border-purple-100 rounded-lg outline-none focus:border-purple-300" placeholder="(00) 00000-0000" required>
+                </div>
+                <div>
+                    <label for="signupCep" class="block text-sm font-medium text-gray-700 mb-1">CEP</label>
+                    <input type="text" id="signupCep" class="w-full px-4 py-2 border border-purple-100 rounded-lg outline-none focus:border-purple-300" placeholder="00000-000" required>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label for="signupAddress" class="block text-sm font-medium text-gray-700 mb-1">Rua / Logradouro</label>
+                    <input type="text" id="signupAddress" class="w-full px-4 py-2 border border-purple-100 rounded-lg outline-none focus:border-purple-300" placeholder="Rua..." required>
+                </div>
+                <div>
+                    <label for="signupNumber" class="block text-sm font-medium text-gray-700 mb-1">Número</label>
+                    <input type="text" id="signupNumber" class="w-full px-4 py-2 border border-purple-100 rounded-lg outline-none focus:border-purple-300" placeholder="123" required>
+                </div>
+                <div>
+                    <label for="signupComplement" class="block text-sm font-medium text-gray-700 mb-1">Complemento</label>
+                    <input type="text" id="signupComplement" class="w-full px-4 py-2 border border-purple-100 rounded-lg outline-none focus:border-purple-300" placeholder="Apto, Bloco (Opcional)">
+                </div>
+                <div>
+                    <label for="signupNeighborhood" class="block text-sm font-medium text-gray-700 mb-1">Bairro</label>
+                    <input type="text" id="signupNeighborhood" class="w-full px-4 py-2 border border-purple-100 rounded-lg outline-none focus:border-purple-300" placeholder="Bairro" required>
+                </div>
+                <div>
+                    <label for="signupCity" class="block text-sm font-medium text-gray-700 mb-1">Cidade/UF</label>
+                    <input type="text" id="signupCity" class="w-full px-4 py-2 border border-purple-100 rounded-lg outline-none focus:border-purple-300" placeholder="Cidade - UF" required>
+                </div>
             </div>
             <div>
                 <label for="signupPassword" class="block text-sm font-medium text-gray-700 mb-1">Senha (mín. 6 caracteres)</label>
@@ -30,6 +66,19 @@
         <p class="mt-6 text-center text-sm text-gray-500">
             Já tem uma conta? <a href="../login/index.html" class="text-purple-600 font-semibold hover:underline">Faça Login</a>
         </p>
+    </div>
+    <div id="messageModal" class="fixed inset-0 z-[200] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow text-center">
+            <div id="messageIconContainer" class="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-6">
+                <i id="messageIcon" class="fas fa-info-circle text-purple-600 text-2xl"></i>
+            </div>
+            <h3 id="messageTitle" class="text-xl font-bold text-purple-900 mb-2">Aviso</h3>
+            <p id="messageContent" class="text-gray-500 mb-8 leading-relaxed">Mensagem aqui...</p>
+            <div id="messageActions" class="flex space-x-3">
+                <button id="messageCancelBtn" class="hidden flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Cancelar</button>
+                <button id="messageConfirmBtn" class="flex-1 py-3 bg-purple-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-purple-200 hover:bg-purple-700 transition">Entendi</button>
+            </div>
+        </div>
     </div>
     <script type="module" src="../../assets/js/auth-signup.js"></script>
 </body>

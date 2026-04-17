@@ -1,6 +1,6 @@
 import { state, elements } from './state.js';
 import { saveItemsToLocalStorage } from './storage.js';
-import { calculateCurrentSpending } from './utils.js';
+import { calculateCurrentSpending, compressImage } from './utils.js';
 import { 
     renderItems, renderRooms, updateDashboard, 
     populateCategorySelects, populateCategoryFilters,
@@ -141,6 +141,9 @@ export async function togglePurchasedStatus(itemId, isPurchased) {
 
 export async function addOrUpdateItem(e) {
     e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn.disabled) return;
+
     const name = elements.itemName?.value.trim();
     const category = elements.itemCategory?.value;
     const priority = elements.itemPriority?.value;
@@ -157,29 +160,40 @@ export async function addOrUpdateItem(e) {
     const room = state.rooms.find(r => r.name === category);
     if (!room) { showAlert("Escolha um cômodo válido!"); return; }
 
-    let item;
-    if (elements.editItemId?.value) {
-        const index = state.items.findIndex(i => i.id === elements.editItemId.value);
-        state.items[index] = { ...state.items[index], name, category, priority, price, link: link || null };
-        item = state.items[index];
-    } else {
-        item = { id: Date.now().toString() + Math.random().toString(36).substr(2, 9), name, category, priority, price, purchased: false, link: link || null };
-        state.items.push(item);
-    }
+    try {
+        submitBtn.disabled = true;
+        const originalText = submitBtn.textContent;
+        submitBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Salvando...';
 
-    saveItemsToLocalStorage();
-    await cloudService.saveItem(room.id, item);
-    calculateCurrentSpending();
-    // Salvar totais consolidados no documento pai
-    await cloudService.saveSettings({ 
-        totalBudget: state.totalBudget, 
-        categories: state.categories,
-        totalEstimated: state.totalEstimated,
-        currentSpending: state.currentSpending
-    });
-    renderItems();
-    updateDashboard();
-    closeAddItemModal();
+        let item;
+        if (elements.editItemId?.value) {
+            const index = state.items.findIndex(i => i.id === elements.editItemId.value);
+            state.items[index] = { ...state.items[index], name, category, priority, price, link: link || null };
+            item = state.items[index];
+        } else {
+            item = { id: Date.now().toString() + Math.random().toString(36).substr(2, 9), name, category, priority, price, purchased: false, link: link || null };
+            state.items.push(item);
+        }
+
+        saveItemsToLocalStorage();
+        await cloudService.saveItem(room.id, item);
+        calculateCurrentSpending();
+        // Salvar totais consolidados no documento pai
+        await cloudService.saveSettings({ 
+            totalBudget: state.totalBudget, 
+            categories: state.categories,
+            totalEstimated: state.totalEstimated,
+            currentSpending: state.currentSpending
+        });
+        renderItems();
+        updateDashboard();
+        closeAddItemModal();
+    } catch (error) {
+        showAlert("Erro ao salvar item: " + error.message, "Erro", "error");
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = elements.editItemId?.value ? 'Salvar Alterações' : 'Salvar Item';
+    }
 }
 
 export async function deleteItem(itemId) {
@@ -301,6 +315,10 @@ export async function addNewRoom() {
     const name = elements.roomName?.value.trim();
     if (!name) return;
 
+    const form = document.getElementById('roomForm');
+    const submitBtn = form?.querySelector('button[type="submit"]');
+    if (submitBtn?.disabled) return;
+
     const room = {
         id: elements.editRoomId?.value || Date.now().toString(),
         name,
@@ -310,21 +328,35 @@ export async function addNewRoom() {
         neutralColor: document.getElementById('neutralColorHex')?.value || '#FFFFFF'
     };
 
-    if (elements.editRoomId?.value) {
-        const index = state.rooms.findIndex(r => r.id === room.id);
-        state.rooms[index] = room;
-    } else {
-        state.rooms.push(room);
-        if (!state.categories.includes(name)) state.categories.push(name);
-    }
+    try {
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Salvando...';
+        }
 
-    saveItemsToLocalStorage();
-    await cloudService.saveRoom(room);
-    await cloudService.saveSettings({ totalBudget: state.totalBudget, categories: state.categories });
-    
-    renderRooms();
-    populateCategoryFilters();
-    closeAddRoomModal();
+        if (elements.editRoomId?.value) {
+            const index = state.rooms.findIndex(r => r.id === room.id);
+            state.rooms[index] = room;
+        } else {
+            state.rooms.push(room);
+            if (!state.categories.includes(name)) state.categories.push(name);
+        }
+
+        saveItemsToLocalStorage();
+        await cloudService.saveRoom(room);
+        await cloudService.saveSettings({ totalBudget: state.totalBudget, categories: state.categories });
+        
+        renderRooms();
+        populateCategoryFilters();
+        closeAddRoomModal();
+    } catch (error) {
+        showAlert("Erro ao salvar cômodo: " + error.message, "Erro", "error");
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Salvar Cômodo';
+        }
+    }
 }
 
 export async function deleteRoom(roomId) {
@@ -573,5 +605,123 @@ export async function resetSavings() {
             savingsFrequency: null
         });
         renderSavingsGrid();
+    }
+}
+
+// PERFIL
+export async function loadUserProfile() {
+    const nameInput = document.getElementById('profileName');
+    const emailInput = document.getElementById('profileEmail');
+    const phoneInput = document.getElementById('profilePhone');
+    const cepInput = document.getElementById('profileCep');
+    const addressInput = document.getElementById('profileAddress');
+    const photoDisplay = document.getElementById('profilePhotoDisplay');
+
+    // 1. Tentar carregar do cache local primeiro para exibição instantânea na sidebar e perfil
+    const cachedPhoto = localStorage.getItem('user_photo_cache');
+    if (cachedPhoto) {
+        updateSidebarPhoto(cachedPhoto);
+        if (photoDisplay) photoDisplay.innerHTML = `<img src="${cachedPhoto}" class="w-full h-full object-cover">`;
+    }
+
+    try {
+        // Se estivermos na página de perfil, dar feedback de carregando nos campos
+        if (nameInput && (!nameInput.value || nameInput.value === 'Carregando...')) {
+            nameInput.value = 'Carregando...';
+        }
+        
+        const profile = await cloudService.getUserProfile();
+        if (profile) {
+            // Atualizar nome na sidebar (userName) em qualquer página
+            const userNameEl = document.getElementById('userName');
+            if (userNameEl) userNameEl.textContent = profile.name || profile.email.split('@')[0];
+
+            // Atualizar formulário se existir
+            if (nameInput) {
+                nameInput.value = profile.name || '';
+                emailInput.value = profile.email || '';
+                phoneInput.value = profile.phone || '';
+                cepInput.value = profile.cep || '';
+                addressInput.value = profile.address || '';
+            }
+            
+            if (profile.photoURL) {
+                // Garantir que a imagem seja exibida se não estiver no cache ou se a URL for nova
+                const isNewURL = profile.photoURL !== localStorage.getItem('user_photo_url_ref');
+                
+                if (!cachedPhoto || isNewURL) {
+                    if (photoDisplay) photoDisplay.innerHTML = `<img src="${profile.photoURL}" class="w-full h-full object-cover">`;
+                    updateSidebarPhoto(profile.photoURL);
+                }
+
+                // Tentar atualizar o cache apenas se a URL for nova
+                if (isNewURL) {
+                    try {
+                        const response = await fetch(profile.photoURL);
+                        const blob = await response.blob();
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            const base64data = reader.result;                
+                            localStorage.setItem('user_photo_cache', base64data);
+                            localStorage.setItem('user_photo_url_ref', profile.photoURL);
+                            updateSidebarPhoto(base64data);
+                        }
+                        reader.readAsDataURL(blob);
+                    } catch (corsError) {
+                        console.warn("CORS: Mantendo URL direta.");
+                        localStorage.setItem('user_photo_url_ref', profile.photoURL);
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Erro ao sincronizar perfil:", error);
+    }
+}
+
+// Função auxiliar para atualizar a foto na sidebar (que aparece em todas as páginas)
+function updateSidebarPhoto(photoData) {
+    const sidebarPhotos = document.querySelectorAll('.sidebar-user-photo');
+    sidebarPhotos.forEach(container => {
+        container.innerHTML = `<img src="${photoData}" class="w-full h-full object-cover rounded-full">`;
+    });
+}
+
+export async function updateProfile(e) {
+    e.preventDefault();
+    const submitBtn = document.getElementById('saveProfileBtn');
+    if (submitBtn.disabled) return;
+
+    const name = document.getElementById('profileName').value;
+    const phone = document.getElementById('profilePhone').value;
+    const cep = document.getElementById('profileCep').value;
+    const address = document.getElementById('profileAddress').value;
+    const photoInput = document.getElementById('profilePhotoInput');
+    const photoFile = photoInput.files[0];
+
+    try {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Salvando...';
+
+        await cloudService.updateUserProfile({
+            name, phone, cep, address
+        }, photoFile);
+
+        await showAlert('Perfil atualizado com sucesso!', 'Sucesso', 'success');
+        
+        if (photoFile) {
+            // Recarregar foto no display localmente para feedback imediato
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const photoDisplay = document.getElementById('profilePhotoDisplay');
+                photoDisplay.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+            };
+            reader.readAsDataURL(photoFile);
+        }
+    } catch (error) {
+        showAlert('Erro ao atualizar perfil: ' + error.message, 'Erro', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Salvar Alterações';
     }
 }

@@ -24,13 +24,24 @@ import {
     syncColorInputs,
     handleLogout, confirmLogout, fetchLinkData,
     openShare, confirmJoinProject, copyProjectId, shareViaWhatsapp,
-    handleSavingsSubmit, toggleSavingsCell, resetSavings
+    handleSavingsSubmit, toggleSavingsCell, resetSavings,
+    loadUserProfile, updateProfile
 } from './modules/events.js';
 import { cloudService } from './classes/CloudService.js';
 
 function init() {
     // 1. CARREGAMENTO INSTANTÂNEO (OFFLINE FIRST)
     loadLocal();
+    
+    // Aplicar foto de perfil do cache instantaneamente
+    const cachedPhoto = localStorage.getItem('user_photo_cache');
+    if (cachedPhoto) {
+        const sidebarPhotos = document.querySelectorAll('.sidebar-user-photo');
+        sidebarPhotos.forEach(container => {
+            container.innerHTML = `<img src="${cachedPhoto}" class="w-full h-full object-cover rounded-full">`;
+        });
+    }
+
     applyCloudData({
         items: state.items,
         categories: state.categories,
@@ -51,7 +62,7 @@ function init() {
             // REDIRECIONAMENTO SE DESLOGADO
             const isDashboard = window.location.pathname.includes('/dashboard/');
             if (isDashboard) {
-                window.location.href = window.location.pathname.includes('/items/') || window.location.pathname.includes('/rooms/') 
+                window.location.href = window.location.pathname.includes('/items/') || window.location.pathname.includes('/rooms/') || window.location.pathname.includes('/savings/') || window.location.pathname.includes('/profile/')
                     ? '../../index.html' 
                     : '../index.html';
             }
@@ -65,6 +76,9 @@ function init() {
 
         const userEmailEl = document.getElementById('userEmail');
         if (userEmailEl) userEmailEl.textContent = user.email;
+
+        // Sincronizar dados do usuário e foto da sidebar em todas as páginas
+        loadUserProfile();
 
         // 3. ATUALIZAÇÃO SILENCIOSA EM SEGUNDO PLANO
         await cloudService.loadFullProject((data) => { applyCloudData(data); });
@@ -281,6 +295,13 @@ function addEventListeners() {
 
     const resetSavingsBtn = document.getElementById('resetSavingsBtn');
     if (resetSavingsBtn) resetSavingsBtn.onclick = resetSavings;
+
+    // Perfil
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+        profileForm.onsubmit = updateProfile;
+        loadUserProfile();
+    }
 
     // Fechar modais com ESC
     document.addEventListener('keydown', (e) => {

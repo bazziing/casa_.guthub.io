@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil - Casa dos Sonhos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body class="bg-[#f9f7fe] min-h-screen flex" data-auth-required>
+    <div id="auth-guard-loader">
+        <div class="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+    </div>
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 bg-white border-r border-purple-100 flex flex-col hidden md:flex">
+        <div class="p-6 border-b border-purple-50 flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
+                <i class="fas fa-heart text-white text-sm"></i>
+            </div>
+            <span class="font-bold text-purple-900 text-lg">Casa dos Sonhos</span>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="../index.html" class="flex items-center space-x-3 p-3 rounded-xl text-gray-500 hover:bg-purple-50 hover:text-purple-600 transition">
+                <i class="fas fa-chart-line w-5"></i>
+                <span>Visão Geral</span>
+            </a>
+            <a href="../items/index.html" class="flex items-center space-x-3 p-3 rounded-xl text-gray-500 hover:bg-purple-50 hover:text-purple-600 transition">
+                <i class="fas fa-list w-5"></i>
+                <span>Lista de Itens</span>
+            </a>
+            <a href="../rooms/index.html" class="flex items-center space-x-3 p-3 rounded-xl text-gray-500 hover:bg-purple-50 hover:text-purple-600 transition">
+                <i class="fas fa-palette w-5"></i>
+                <span>Cores e Cômodos</span>
+            </a>
+            <a href="../savings/index.html" class="flex items-center space-x-3 p-3 rounded-xl text-gray-500 hover:bg-purple-50 hover:text-purple-600 transition">
+                <i class="fas fa-piggy-bank w-5"></i>
+                <span>Cofrinho</span>
+            </a>
+            <a href="index.html" class="flex items-center space-x-3 p-3 rounded-xl bg-purple-50 text-purple-700 font-medium">
+                <i class="fas fa-user-circle w-5"></i>
+                <span>Meu Perfil</span>
+            </a>
+            <button id="openShareModalBtn" class="w-full flex items-center space-x-3 p-3 rounded-xl text-gray-500 hover:bg-purple-50 hover:text-purple-600 transition">
+                <i class="fas fa-users w-5"></i>
+                <span>Compartilhar</span>
+            </button>
+        </nav>
+        <div class="p-4 border-t border-purple-50">
+            <div class="flex items-center space-x-3 mb-4 p-2">
+                <div class="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center sidebar-user-photo overflow-hidden">
+                    <i class="fas fa-user text-purple-600"></i>
+                </div>
+                <div class="flex flex-col overflow-hidden">
+                    <span id="userName" class="text-xs font-bold text-purple-900 truncate">Carregando...</span>
+                    <button id="logoutBtn" class="text-left text-[10px] text-red-500 hover:underline">Sair da conta</button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <!-- Header Mobile -->
+        <header class="md:hidden bg-white p-4 border-b border-purple-100 flex justify-between items-center shrink-0">
+            <span class="font-bold text-purple-900">Casa dos Sonhos</span>
+            <button id="mobileMenuBtn" class="text-purple-600 p-2"><i class="fas fa-bars text-xl"></i></button>
+        </header>
+
+        <div class="flex-1 overflow-y-auto">
+            <div class="max-w-4xl mx-auto p-6 md:p-10 space-y-8">
+                <div>
+                    <h1 class="text-2xl font-bold text-purple-900">Meu Perfil</h1>
+                    <p class="text-gray-500">Gerencie suas informações pessoais e foto de perfil.</p>
+                </div>
+
+                <div class="bg-white rounded-[2.5rem] p-8 md:p-12 card-shadow">
+                    <form id="profileForm" class="space-y-8">
+                        <!-- Photo Section -->
+                        <div class="flex flex-col items-center space-y-4">
+                            <div class="relative group">
+                                <div id="profilePhotoDisplay" class="w-32 h-32 rounded-3xl bg-purple-100 flex items-center justify-center overflow-hidden border-4 border-white shadow-xl">
+                                    <i class="fas fa-user text-purple-300 text-5xl"></i>
+                                </div>
+                                <label for="profilePhotoInput" class="absolute -bottom-2 -right-2 w-10 h-10 bg-purple-600 text-white rounded-xl flex items-center justify-center cursor-pointer hover:bg-purple-700 transition shadow-lg border-2 border-white">
+                                    <i class="fas fa-camera text-sm"></i>
+                                    <input type="file" id="profilePhotoInput" class="hidden" accept="image/*">
+                                </label>
+                            </div>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-center">Clique na câmera para alterar a foto</p>
+                        </div>
+
+                        <!-- Data Section -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="md:col-span-2">
+                                <label class="text-xs font-bold text-gray-400 uppercase ml-1">Nome Completo</label>
+                                <input type="text" id="profileName" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-400 uppercase ml-1">E-mail</label>
+                                <input type="email" id="profileEmail" class="w-full px-4 py-3 rounded-xl bg-gray-50 border-none outline-none text-gray-400 cursor-not-allowed" disabled>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-400 uppercase ml-1">Telefone</label>
+                                <input type="tel" id="profilePhone" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-400 uppercase ml-1">CEP</label>
+                                <input type="text" id="profileCep" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
+                            </div>
+                            <div class="md:col-span-1">
+                                <label class="text-xs font-bold text-gray-400 uppercase ml-1">Endereço</label>
+                                <input type="text" id="profileAddress" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
+                            </div>
+                        </div>
+
+                        <div class="pt-6">
+                            <button type="submit" id="saveProfileBtn" class="w-full py-4 bg-purple-600 text-white rounded-2xl font-bold hover:bg-purple-700 transition shadow-lg shadow-purple-200 flex items-center justify-center space-x-2">
+                                <span>Salvar Alterações</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Share Modal (Reutilizado) -->
+    <div id="shareModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-md p-8 card-shadow custom-scrollbar">
+            <div class="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-users text-purple-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-purple-900 text-center mb-2">Compartilhar Lista</h3>
+            <p class="text-gray-500 text-center mb-6 text-sm">O casal pode acessar a mesma lista usando o código abaixo.</p>
+            <div class="space-y-6">
+                <button id="copyProjectIdBtn" class="w-full text-left bg-purple-50 p-4 rounded-2xl border border-purple-100 hover:bg-purple-100 transition group">
+                    <label class="text-[10px] font-bold text-purple-400 uppercase tracking-widest ml-1 cursor-pointer">Seu Código de Acesso</label>
+                    <div class="flex items-center justify-between mt-1">
+                        <span id="displayProjectId" class="font-mono font-bold text-purple-900">Carregando...</span>
+                        <div class="text-purple-600 group-hover:scale-110 transition p-2">
+                            <i class="fas fa-copy"></i>
+                        </div>
+                    </div>
+                </button>
+                <button id="shareWhatsappBtn" class="w-full flex items-center justify-center space-x-2 py-3 bg-green-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-green-100 hover:bg-green-600 transition">
+                    <i class="fab fa-whatsapp text-lg"></i>
+                    <span>Enviar via WhatsApp</span>
+                </button>
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-100"></div></div>
+                    <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-300 font-bold">OU</span></div>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Entrar em outra lista</label>
+                    <div class="flex space-x-2 mt-1">
+                        <input type="text" id="joinProjectIdInput" placeholder="Cole o código do parceiro" class="flex-1 px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-purple-200 text-sm">
+                        <button id="confirmJoinProjectBtn" class="px-4 bg-purple-600 text-white rounded-xl font-bold text-sm hover:bg-purple-700 transition">Conectar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8">
+                <button id="closeShareModalBtn" class="w-full py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Modal -->
+    <div id="messageModal" class="fixed inset-0 z-[200] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow text-center">
+            <div id="messageIconContainer" class="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-6">
+                <i id="messageIcon" class="fas fa-info-circle text-purple-600 text-2xl"></i>
+            </div>
+            <h3 id="messageTitle" class="text-xl font-bold text-purple-900 mb-2">Aviso</h3>
+            <p id="messageContent" class="text-gray-500 mb-8 leading-relaxed">Mensagem aqui...</p>
+            <div id="messageActions" class="flex space-x-3">
+                <button id="messageCancelBtn" class="hidden flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Cancelar</button>
+                <button id="messageConfirmBtn" class="flex-1 py-3 bg-purple-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-purple-200 hover:bg-purple-700 transition">Entendi</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-overlay"></div>
+    <script type="module" src="../../assets/js/app.js"></script>
+</body>
+</html>

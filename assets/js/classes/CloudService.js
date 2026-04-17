@@ -5,8 +5,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { 
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
-    signOut, onAuthStateChanged 
+    signOut, onAuthStateChanged, sendPasswordResetEmail 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 import { firebaseConfig, COLLECTION_NAME } from '../modules/firebase-config.js';
 
 export class CloudService {
@@ -14,6 +15,7 @@ export class CloudService {
         this.app = initializeApp(firebaseConfig);
         this.db = getFirestore(this.app);
         this.auth = getAuth(this.app);
+        this.storage = getStorage(this.app);
         this.user = null;
         this.projectId = null;
         this.projectDocRef = null;
@@ -24,30 +26,17 @@ export class CloudService {
         onAuthStateChanged(this.auth, async (user) => {
             this.user = user;
             if (user) {
-                // Buscar ou Criar Perfil do Usuário para pegar o projectId
+                // Buscar Perfil do Usuário
                 const userRef = doc(this.db, 'users', user.uid);
                 const userSnap = await getDoc(userRef);
                 
                 if (userSnap.exists()) {
                     this.projectId = userSnap.data().projectId;
                 } else {
-                    // Novo usuário: cria um projectId novo (usando o próprio UID como inicial)
+                    // Se o usuário existe no Auth mas não no Firestore, 
+                    // provavelmente é um signup em progresso ou erro de rede anterior.
+                    // O signUp já deve ter criado isso, mas por segurança:
                     this.projectId = user.uid;
-                    await setDoc(userRef, { 
-                        email: user.email, 
-                        projectId: this.projectId,
-                        role: 'owner' 
-                    });
-                    
-                    // Inicializa o documento do projeto se não existir
-                    const projectRef = doc(this.db, 'projects', this.projectId);
-                    const projSnap = await getDoc(projectRef);
-                    if (!projSnap.exists()) {
-                        await setDoc(projectRef, {
-                            settings: { totalBudget: 0, categories: ['Móveis', 'Eletros', 'Decoração'], totalEstimated: 0, currentSpending: 0 },
-                            createdAt: new Date().toISOString()
-                        });
-                    }
                 }
                 this.projectDocRef = doc(this.db, 'projects', this.projectId);
             } else {
@@ -58,12 +47,67 @@ export class CloudService {
         });
     }
 
-    async signUp(email, password) {
-        return createUserWithEmailAndPassword(this.auth, email, password);
+    async signUp(email, password, extraData = {}) {
+        const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
+        const user = userCredential.user;
+        
+        // Criar Perfil no Firestore com dados extras
+        const userRef = doc(this.db, 'users', user.uid);
+        const projectId = user.uid; // Por padrão, o projectId é o UID do criador
+        
+        await setDoc(userRef, { 
+            uid: user.uid,
+            email: user.email, 
+            name: extraData.name || '',
+            phone: extraData.phone || '',
+            cep: extraData.cep || '',
+            address: extraData.address || '',
+            projectId: projectId,
+            role: 'owner',
+            createdAt: new Date().toISOString()
+        });
+
+        // Inicializa o documento do projeto
+        const projectRef = doc(this.db, 'projects', projectId);
+        await setDoc(projectRef, {
+            settings: { totalBudget: 0, categories: ['Móveis', 'Eletros', 'Decoração'], totalEstimated: 0, currentSpending: 0 },
+            owner: user.uid,
+            createdAt: new Date().toISOString()
+        });
+
+        return userCredential;
+    }
+
+    async getUserProfile() {
+        if (!this.user) return null;
+        const userRef = doc(this.db, 'users', this.user.uid);
+        const snap = await getDoc(userRef);
+        return snap.exists() ? snap.data() : null;
+    }
+
+    async updateUserProfile(data, photoFile = null) {
+        if (!this.user) throw new Error("Usuário não autenticado");
+        const userRef = doc(this.db, 'users', this.user.uid);
+        
+        const updateData = { ...data };
+        
+        if (photoFile) {
+            const storageRef = ref(this.storage, `profile_photos/${this.user.uid}`);
+            await uploadBytes(storageRef, photoFile);
+            const photoURL = await getDownloadURL(storageRef);
+            updateData.photoURL = photoURL;
+        }
+
+        await updateDoc(userRef, updateData);
+        return updateData;
     }
 
     async login(email, password) { return signInWithEmailAndPassword(this.auth, email, password); }
     async logout() { return signOut(this.auth); }
+
+    async resetPassword(email) {
+        return sendPasswordResetEmail(this.auth, email);
+    }
 
     // Novo: Unir-se a outro projeto (Compartilhamento)
     async joinProject(targetProjectId) {

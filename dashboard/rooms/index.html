@@ -39,6 +39,10 @@
                 <i class="fas fa-piggy-bank w-5"></i>
                 <span>Cofrinho</span>
             </a>
+            <a href="../profile/index.html" class="flex items-center space-x-3 p-3 rounded-xl text-gray-500 hover:bg-purple-50 hover:text-purple-600 transition">
+                <i class="fas fa-user-circle w-5"></i>
+                <span>Meu Perfil</span>
+            </a>
             <button id="openShareModalBtn" class="w-full flex items-center space-x-3 p-3 rounded-xl text-gray-500 hover:bg-purple-50 hover:text-purple-600 transition">
                 <i class="fas fa-users w-5"></i>
                 <span>Compartilhar</span>
@@ -46,11 +50,11 @@
         </nav>
         <div class="p-4 border-t border-purple-50">
             <div class="flex items-center space-x-3 mb-4 p-2">
-                <div class="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center">
+                <div class="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center sidebar-user-photo overflow-hidden">
                     <i class="fas fa-user text-purple-600"></i>
                 </div>
                 <div class="flex flex-col overflow-hidden">
-                    <span id="userEmail" class="text-xs font-medium text-purple-900 truncate">carregando...</span>
+                    <span id="userName" class="text-xs font-bold text-purple-900 truncate">Carregando...</span>
                     <button id="logoutBtn" class="text-left text-[10px] text-red-500 hover:underline">Sair da conta</button>
                 </div>
             </div>
@@ -95,7 +99,7 @@
 
     <!-- Modal Add Room -->
     <div id="addRoomModal" class="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
-        <div class="bg-white rounded-[2rem] w-full max-w-md p-8 card-shadow">
+        <div class="bg-white rounded-[2rem] w-full max-w-md p-8 card-shadow custom-scrollbar">
             <h3 class="text-xl font-bold text-purple-900 mb-6" id="roomModalTitle">Novo Cômodo</h3>
             <form id="roomForm" class="space-y-6">
                 <input type="hidden" id="editRoomId">
@@ -149,7 +153,7 @@
 
     <!-- Share Modal -->
     <div id="shareModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
-        <div class="bg-white rounded-[2rem] w-full max-w-md p-8 card-shadow">
+        <div class="bg-white rounded-[2rem] w-full max-w-md p-8 card-shadow custom-scrollbar">
             <div class="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-6">
                 <i class="fas fa-users text-purple-600 text-2xl"></i>
             </div>
@@ -210,7 +214,7 @@
 
     <!-- Delete Room Confirmation Modal -->
     <div id="deleteRoomModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
-        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow">
+        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow custom-scrollbar">
             <div class="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-6">
                 <i class="fas fa-trash-alt text-red-500 text-2xl"></i>
             </div>
@@ -225,7 +229,7 @@
 
     <!-- Logout Confirmation Modal -->
     <div id="logoutModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
-        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow">
+        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow custom-scrollbar">
             <div class="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-6">
                 <i class="fas fa-sign-out-alt text-red-500 text-2xl"></i>
             </div>

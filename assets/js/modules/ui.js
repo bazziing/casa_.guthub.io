@@ -25,7 +25,21 @@ export function updateDashboard() {
     const remainingBudget = totalBudget - state.currentSpending;
     const remainingBudgetEl = document.getElementById('remainingBudget');
     if (remainingBudgetEl) {
-        remainingBudgetEl.textContent = `${formatCurrency(remainingBudget)} restantes`;
+        // Ajustar cores e texto conforme o saldo
+        if (remainingBudget > 0) {
+            remainingBudgetEl.textContent = `${formatCurrency(remainingBudget)} restantes`;
+            remainingBudgetEl.classList.remove('text-gray-400', 'text-red-600');
+            remainingBudgetEl.classList.add('text-green-600');
+        } else if (remainingBudget < 0) {
+            // Remove o sinal negativo usando Math.abs e muda o texto
+            remainingBudgetEl.textContent = `${formatCurrency(Math.abs(remainingBudget))} ultrapassados`;
+            remainingBudgetEl.classList.remove('text-gray-400', 'text-green-600');
+            remainingBudgetEl.classList.add('text-red-600');
+        } else {
+            remainingBudgetEl.textContent = `${formatCurrency(0)} restantes`;
+            remainingBudgetEl.classList.remove('text-green-600', 'text-red-600');
+            remainingBudgetEl.classList.add('text-gray-400');
+        }
     }
 
     const progressFill = document.getElementById('progressFill');
@@ -701,14 +715,24 @@ export function renderProjectMembers(members, currentUserEmail) {
     members.forEach(member => {
         const isMe = member.email === currentUserEmail;
         const memberEl = document.createElement('div');
-        memberEl.className = 'flex items-center space-x-3 p-2 rounded-xl bg-purple-50/50 border border-purple-100/50';
+        memberEl.className = 'flex items-center space-x-3 p-3 rounded-2xl bg-purple-50/50 border border-purple-100/30 hover:bg-purple-100/50 transition';
+        
+        const photoContent = member.photoURL 
+            ? `<img src="${member.photoURL}" class="w-full h-full object-cover rounded-full">`
+            : `<i class="fas fa-user text-purple-600 text-xs"></i>`;
+
         memberEl.innerHTML = `
-            <div class="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center shrink-0">
-                <i class="fas fa-user text-purple-600 text-xs"></i>
+            <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center shrink-0 overflow-hidden border-2 border-white shadow-sm">
+                ${photoContent}
             </div>
             <div class="min-w-0 flex-1">
-                <p class="text-xs font-bold text-purple-900 truncate">${member.email}</p>
-                <p class="text-[10px] text-purple-400 font-medium">${isMe ? '(Você)' : (member.role === 'owner' ? 'Proprietário' : 'Convidado')}</p>
+                <p class="text-xs font-bold text-purple-900 truncate">${member.name || 'Sem nome'}</p>
+                <p class="text-[10px] text-purple-400 font-medium truncate">${member.email}</p>
+            </div>
+            <div class="shrink-0 text-right">
+                <span class="px-2 py-1 bg-white rounded-lg text-[8px] font-black uppercase tracking-wider text-purple-400 border border-purple-100 shadow-sm">
+                    ${isMe ? 'Você' : (member.role === 'owner' ? 'Dono' : 'Parceiro')}
+                </span>
             </div>
         `;
         listContainer.appendChild(memberEl);
