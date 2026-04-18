@@ -8,42 +8,45 @@ export function loadItemsFromLocalStorage() {
     const savedBudget = localStorage.getItem('weddingHomeBudget');
     const savedSavingsTarget = localStorage.getItem('weddingHomeSavingsTarget');
     const savedSavingsDate = localStorage.getItem('weddingHomeSavingsDate');
-    const savedSavingsFrequency = localStorage.getItem('weddingHomeSavingsFrequency');
     const savedSavingsGrid = localStorage.getItem('weddingHomeSavingsGrid');
    
-    if (savedItems) {
-        state.items = JSON.parse(savedItems);
-    }
-   
-    if (savedCategories) {
-        state.categories = JSON.parse(savedCategories);
-    }
-   
-    if (savedRooms) {
-        state.rooms = JSON.parse(savedRooms);
-    }
-   
-    if (savedBudget) {
-        state.totalBudget = parseFloat(savedBudget);
-        if (elements.totalBudget) {
-            elements.totalBudget.value = formatCurrency(state.totalBudget);
+    try {
+        if (savedItems) state.items = JSON.parse(savedItems);
+        if (savedCategories) state.categories = JSON.parse(savedCategories);
+        if (savedRooms) state.rooms = JSON.parse(savedRooms);
+        
+        if (savedBudget) {
+            state.totalBudget = parseFloat(savedBudget);
+            if (elements.totalBudget) elements.totalBudget.value = formatCurrency(state.totalBudget);
         }
+        
+        if (savedSavingsTarget) state.savingsTarget = parseFloat(savedSavingsTarget);
+
+        // Proteção contra dados corrompidos "[object Object]"
+        if (savedSavingsDate && savedSavingsDate !== "[object Object]") {
+            state.savingsDate = JSON.parse(savedSavingsDate);
+        }
+        
+        if (savedSavingsGrid && savedSavingsGrid !== "[object Object]") {
+            state.savingsGrid = JSON.parse(savedSavingsGrid);
+        }
+    } catch (e) {
+        console.warn("Cache local corrompido, limpando dados problemáticos...", e);
+        // Não limpa tudo, apenas ignora o que deu erro para deixar o Firebase sobrescrever
     }
-    
-    if (savedSavingsTarget) state.savingsTarget = parseFloat(savedSavingsTarget);
-    if (savedSavingsDate) state.savingsDate = savedSavingsDate;
-    if (savedSavingsFrequency) state.savingsFrequency = savedSavingsFrequency;
-    if (savedSavingsGrid) state.savingsGrid = JSON.parse(savedSavingsGrid);
 }
 
 export function saveItemsToLocalStorage() {
-    localStorage.setItem('weddingHomeItems', JSON.stringify(state.items));
-    localStorage.setItem('weddingHomeCategories', JSON.stringify(state.categories));
-    localStorage.setItem('weddingHomeRooms', JSON.stringify(state.rooms));
-    localStorage.setItem('weddingHomeBudget', state.totalBudget.toString());
-    
-    localStorage.setItem('weddingHomeSavingsTarget', state.savingsTarget.toString());
-    localStorage.setItem('weddingHomeSavingsDate', state.savingsDate || '');
-    localStorage.setItem('weddingHomeSavingsFrequency', state.savingsFrequency || '');
-    localStorage.setItem('weddingHomeSavingsGrid', JSON.stringify(state.savingsGrid || []));
+    try {
+        localStorage.setItem('weddingHomeItems', JSON.stringify(state.items));
+        localStorage.setItem('weddingHomeCategories', JSON.stringify(state.categories));
+        localStorage.setItem('weddingHomeRooms', JSON.stringify(state.rooms));
+        localStorage.setItem('weddingHomeBudget', (state.totalBudget || 0).toString());
+        
+        localStorage.setItem('weddingHomeSavingsTarget', (state.savingsTarget || 0).toString());
+        localStorage.setItem('weddingHomeSavingsDate', JSON.stringify(state.savingsDate || {}));
+        localStorage.setItem('weddingHomeSavingsGrid', JSON.stringify(state.savingsGrid || []));
+    } catch (e) {
+        console.error("Erro ao salvar no localStorage:", e);
+    }
 }

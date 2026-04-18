@@ -1,6 +1,6 @@
 import { state, elements } from './state.js';
 import { saveItemsToLocalStorage } from './storage.js';
-import { calculateCurrentSpending, compressImage } from './utils.js';
+import { calculateCurrentSpending, compressImage, formatCurrency } from './utils.js';
 import { 
     renderItems, renderRooms, updateDashboard, 
     populateCategorySelects, populateCategoryFilters,
@@ -9,7 +9,7 @@ import {
     closeAddCategoryModal,
     openLogoutModal, closeLogoutModal,
     openDeleteConfirmModal, closeDeleteConfirmModal,
-    openShareModal, showAlert, showConfirm, renderSavingsGrid, renderProjectMembers
+    openShareModal, showAlert, showConfirm, renderSavingsGrid, renderProjectMembers, renderRoomDetail
 } from './ui.js';
 import { cloudService } from '../classes/CloudService.js';
 
@@ -610,112 +610,106 @@ export function editRoom(roomId) {
 // COFRINHO
 export async function handleSavingsSubmit(e) {
     e.preventDefault();
-    const target = parseFloat(document.getElementById('savingsTargetInput')?.value);
-    const month = parseInt(document.getElementById('savingsMonthInput')?.value);
-    const year = parseInt(document.getElementById('savingsYearInput')?.value);
-    const frequency = document.getElementById('savingsFrequencyInput')?.value;
+    const targetInput = document.getElementById('savingsTargetInput');
+    const monthInput = document.getElementById('savingsMonthInput');
+    const yearInput = document.getElementById('savingsYearInput');
 
-    if (isNaN(target) || isNaN(month) || isNaN(year) || !frequency) return;
+    const target = parseFloat(targetInput?.value);
+    const month = parseInt(monthInput?.value);
+    const year = parseInt(yearInput?.value);
 
-    // Calcular número de períodos
-    const targetDate = new Date(year, month - 1, 1);
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    
-    let periods = 0;
-    if (frequency === 'monthly') {
-        periods = (targetDate.getFullYear() - today.getFullYear()) * 12 + (targetDate.getMonth() - today.getMonth());
-    } else if (frequency === 'weekly') {
-        const diffTime = targetDate - today;
-        periods = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
-    } else if (frequency === 'daily') {
-        const diffTime = targetDate - today;
-        periods = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    }
-
-    if (periods <= 0) {
-        showAlert('A data objetivo deve ser no futuro!', 'Erro de Data', 'error');
+    if (isNaN(target) || isNaN(month) || isNaN(year)) {
+        showAlert('Preencha todos os campos corretamente!', 'Dados Incompletos');
         return;
     }
 
-    // Gerar grid com valores variados
-    const grid = [];
-    
-    // Gerar pesos aleatórios
-    const weights = [];
-    for (let i = 0; i < periods; i++) {
-        weights.push(0.5 + Math.random()); // Variação entre 0.5 e 1.5
-    }
-    const totalWeight = weights.reduce((a, b) => a + b, 0);
-    
-    let sumGenerated = 0;
-    for (let i = 0; i < periods; i++) {
-        let val = (weights[i] / totalWeight) * target;
-        val = Math.round(val * 100) / 100; // Arredondar para 2 casas
-        grid.push({ value: val, completed: false });
-        sumGenerated += val;
-    }
-    
-    // Ajustar erro de arredondamento no último
-    const diff = target - sumGenerated;
-    grid[grid.length - 1].value = Math.round((grid[grid.length - 1].value + diff) * 100) / 100;
-
     state.savingsTarget = target;
     state.savingsDate = { month, year };
-    state.savingsFrequency = frequency;
-    state.savingsGrid = grid;
+    state.savingsGrid = []; // Começa sem nenhum quadradinho
 
-    saveItemsToLocalStorage();
-    await cloudService.saveSettings({ 
-        savingsTarget: state.savingsTarget,
-        savingsDate: state.savingsDate,
-        savingsFrequency: state.savingsFrequency,
-        savingsGrid: state.savingsGrid,
-        totalBudget: state.totalBudget
-    });
+    try {
+        saveItemsToLocalStorage();
+        await cloudService.saveSettings({ 
+            savingsTarget: state.savingsTarget,
+            savingsDate: state.savingsDate,
+            savingsGrid: state.savingsGrid
+        });
+        
+        renderSavingsGrid();
+    } catch (error) {
+        showAlert('Erro ao iniciar cofrinho: ' + error.message, 'Erro', 'error');
+    }
+}
+
+export async function addManualDeposit() {
+    const input = document.getElementById('manualDepositInput');
+    const val = parseFloat(input?.value);
     
-    renderSavingsGrid();
+    if (isNaN(val) || val <= 0) {
+        showAlert('Insira um valor válido para guardar!', 'Valor Inválido');
+        return;
+    }
+
+    // Buscar quem está guardando (nome do perfil ou email como fallback)
+    let authorName = 'Alguém';
+    try {
+        const profile = await cloudService.getUserProfile();
+        authorName = profile?.name || cloudService.user?.email.split('@')[0] || 'Alguém';
+    } catch (e) { console.error("Erro ao identificar autor do depósito:", e); }
+
+    // ADICIONA UM NOVO QUADRADINHO COM AUTOR
+    const newCell = { 
+        value: val, 
+        completed: true, 
+        timestamp: Date.now(),
+        author: authorName
+    };
+    state.savingsGrid.push(newCell);
+
+    try {
+        saveItemsToLocalStorage();
+        await cloudService.saveSettings({ 
+            savingsGrid: state.savingsGrid
+        });
+        
+        input.value = '';
+        renderSavingsGrid();
+        updateDashboard();
+    } catch (error) {
+        showAlert('Erro ao salvar depósito: ' + error.message, 'Erro', 'error');
+    }
 }
 
 export async function toggleSavingsCell(index) {
+    // No modo manual, clicar em um quadrado serve para removê-lo
     const cell = state.savingsGrid[index];
     if (!cell) return;
 
-    cell.completed = !cell.completed;
-    
-    // Somar ao orçamento se completado, subtrair se desmarcado
-    if (cell.completed) {
-        state.totalBudget += cell.value;
-    } else {
-        state.totalBudget -= cell.value;
+    const confirmed = await showConfirm(`Deseja remover este depósito de ${formatCurrency(cell.value)}?`, 'Remover do Cofrinho', 'Sim, remover');
+    if (confirmed) {
+        state.savingsGrid.splice(index, 1);
+        saveItemsToLocalStorage();
+        await cloudService.saveSettings({ savingsGrid: state.savingsGrid });
+        renderSavingsGrid();
+        updateDashboard();
     }
-
-    saveItemsToLocalStorage();
-    await cloudService.saveSettings({ 
-        savingsGrid: state.savingsGrid,
-        totalBudget: state.totalBudget
-    });
-    
-    renderSavingsGrid();
-    updateDashboard(); // Atualiza dashboard se os elementos estiverem presentes
 }
 
 export async function resetSavings() {
-    const confirmed = await showConfirm('Tem certeza que deseja reiniciar seu cofrinho? Isso não afetará o orçamento atual, mas o tabuleiro será apagado.', 'Reiniciar Cofrinho');
+    const confirmed = await showConfirm('Deseja reiniciar seu cofrinho? Todo o progresso e depósitos serão apagados.', 'Reiniciar Cofrinho');
     if (confirmed) {
         state.savingsGrid = [];
         state.savingsTarget = 0;
         state.savingsDate = null;
-        state.savingsFrequency = null;
         
         saveItemsToLocalStorage();
         await cloudService.saveSettings({ 
             savingsGrid: [],
             savingsTarget: 0,
-            savingsDate: null,
-            savingsFrequency: null
+            savingsDate: null
         });
         renderSavingsGrid();
+        updateDashboard();
     }
 }
 

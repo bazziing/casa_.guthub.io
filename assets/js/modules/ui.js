@@ -1,5 +1,5 @@
 import { state, elements } from './state.js';
-import { getRoomColor, formatCurrency } from './utils.js';
+import { getRoomColor, formatCurrency, getTotalEffectiveBudget } from './utils.js';
 
 export function updateDashboard() {
     // Verificar se estamos em uma página que tem os elementos do dashboard
@@ -14,7 +14,17 @@ export function updateDashboard() {
         totalEstimatedEl.textContent = formatCurrency(state.totalEstimated);
     }
 
-    const totalBudget = parseFloat(state.totalBudget) || 0;
+    const totalBudget = getTotalEffectiveBudget(); // Soma Base + Cofrinho
+    const totalBudgetInput = document.getElementById('totalBudget');
+    if (totalBudgetInput) {
+        // Se for um input, atualiza o valor. Se for apenas texto, atualiza o textContent.
+        if (totalBudgetInput.tagName === 'INPUT') {
+            totalBudgetInput.value = formatCurrency(totalBudget);
+        } else {
+            totalBudgetInput.textContent = formatCurrency(totalBudget);
+        }
+    }
+
     const percentageUsed = totalBudget > 0 ? (state.currentSpending / totalBudget) * 100 : 0;
     
     const percentageUsedEl = document.getElementById('percentageUsed');
@@ -590,7 +600,7 @@ export function renderPurchasedItemsSummary() {
                 <span class="font-bold text-gray-800 text-sm">${item.name}</span>
                 <span class="text-[10px] text-gray-400 font-bold uppercase flex items-center">
                     <span class="w-2 h-2 rounded-full mr-1" style="background-color: ${color}"></span>
-                    ${item.category} • Alta Prioridade
+                    ${item.category} • Média Prioridade
                 </span>
             </div>
             <span class="font-mono font-bold text-green-600 text-sm">${formatCurrency(price)}</span>
@@ -634,7 +644,7 @@ export function renderHighPriorityItems() {
                 <span class="font-bold text-gray-800 text-sm">${item.name}</span>
                 <span class="text-[10px] text-gray-400 font-bold uppercase flex items-center">
                     <span class="w-2 h-2 rounded-full mr-1" style="background-color: ${color}"></span>
-                    ${item.category} • Alta Prioridade
+                    ${item.category} • Média Prioridade
                 </span>
             </div>
             <span class="font-mono font-bold text-orange-600 text-sm">${formatCurrency(parseFloat(item.price))}</span>
@@ -676,7 +686,7 @@ export function renderMediumPriorityItems() {
                 <span class="font-bold text-gray-800 text-sm">${item.name}</span>
                 <span class="text-[10px] text-gray-400 font-bold uppercase flex items-center">
                     <span class="w-2 h-2 rounded-full mr-1" style="background-color: ${color}"></span>
-                    ${item.category} • Alta Prioridade
+                    ${item.category} • Média Prioridade
                 </span>
             </div>
             <span class="font-mono font-bold text-amber-600 text-sm">${formatCurrency(parseFloat(item.price))}</span>
@@ -718,7 +728,7 @@ export function renderLowPriorityItems() {
                 <span class="font-bold text-gray-800 text-sm">${item.name}</span>
                 <span class="text-[10px] text-gray-400 font-bold uppercase flex items-center">
                     <span class="w-2 h-2 rounded-full mr-1" style="background-color: ${color}"></span>
-                    ${item.category} • Alta Prioridade
+                    ${item.category} • Média Prioridade
                 </span>
             </div>
             <span class="font-mono font-bold text-blue-600 text-sm">${formatCurrency(parseFloat(item.price))}</span>
@@ -772,63 +782,73 @@ export function renderCategoriesSummary() {
 }
 
 export function renderSavingsGrid() {
-    const gridContainer = document.getElementById('savingsGrid');
-    const container = document.getElementById('savingsContainer');
     const setupSection = document.getElementById('savingsSetup');
+    const container = document.getElementById('savingsContainer');
+    const gridContainer = document.getElementById('savingsGrid');
     const summarySection = document.getElementById('savingsSummary');
-    const emptyState = document.getElementById('emptySavingsState');
     
-    if (!gridContainer) return;
+    if (!setupSection || !container) return;
 
-    if (!state.savingsGrid || state.savingsGrid.length === 0) {
-        if (container) container.classList.add('hidden');
+    // Se não tiver meta definida, mostra o setup
+    if (!state.savingsTarget || state.savingsTarget <= 0) {
+        setupSection.classList.remove('hidden');
+        container.classList.add('hidden');
         if (summarySection) summarySection.classList.add('hidden');
-        if (setupSection) setupSection.classList.remove('hidden');
-        if (emptyState) emptyState.classList.remove('hidden');
-        
-        // Pre-fill inputs if state has data
-        const targetInput = document.getElementById('savingsTargetInput');
-        if (targetInput && state.savingsTarget) targetInput.value = state.savingsTarget;
-        
         return;
     }
 
-    if (container) container.classList.remove('hidden');
+    // Se tiver meta, mostra o tabuleiro
+    setupSection.classList.add('hidden');
+    container.classList.remove('hidden');
     if (summarySection) summarySection.classList.remove('hidden');
-    if (setupSection) setupSection.classList.add('hidden');
-    if (emptyState) emptyState.classList.add('hidden');
 
-    gridContainer.innerHTML = '';
-    
-    let totalSaved = 0;
-    state.savingsGrid.forEach((cell, index) => {
-        if (cell.completed) totalSaved += cell.value;
-        
-        const cellEl = document.createElement('div');
-        cellEl.className = `savings-cell ${cell.completed ? 'completed' : 'pending'}`;
-        cellEl.dataset.index = index;
-        
-        cellEl.innerHTML = `
-            <i class="fas fa-check-circle"></i>
-            <span class="text-[10px] font-bold opacity-70">${index + 1}</span>
-            <span class="text-xs font-black">${formatCurrency(cell.value)}</span>
-        `;
-        
-        gridContainer.appendChild(cellEl);
-    });
+    // Atualizar Cabeçalho
+    const targetEl = document.getElementById('displaySavingsTarget');
+    const dateEl = document.getElementById('displaySavingsDate');
+    if (targetEl) targetEl.textContent = formatCurrency(state.savingsTarget);
+    if (dateEl && state.savingsDate) dateEl.textContent = `${state.savingsDate.month}/${state.savingsDate.year}`;
 
-    // Update Summary
-    const totalSavedDisplay = document.getElementById('totalSavedDisplay');
-    const progressDisplay = document.getElementById('savingsProgressDisplay');
-    const remainingDisplay = document.getElementById('remainingToSaveDisplay');
+    if (gridContainer) {
+        gridContainer.innerHTML = '';
+        let totalSaved = 0;
+        
+        state.savingsGrid.forEach((cell, index) => {
+            totalSaved += cell.value;
+            const cellEl = document.createElement('div');
+            cellEl.className = `savings-cell completed cursor-pointer group relative`;
+            cellEl.dataset.index = index;
+            cellEl.innerHTML = `
+                <span class="text-xs font-black leading-tight">${formatCurrency(cell.value)}</span>
+                <span class="savings-author-tag">${cell.author || 'Alguém'}</span>
+                <div class="absolute inset-0 bg-red-500/90 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-2xl transition-opacity z-10">
+                    <i class="fas fa-trash-alt text-sm"></i>
+                </div>
+            `;
+            gridContainer.appendChild(cellEl);
+        });
 
-    if (totalSavedDisplay) totalSavedDisplay.textContent = formatCurrency(totalSaved);
-    
-    const progress = state.savingsTarget > 0 ? (totalSaved / state.savingsTarget) * 100 : 0;
-    if (progressDisplay) progressDisplay.textContent = `${progress.toFixed(1)}%`;
-    
-    const remaining = state.savingsTarget - totalSaved;
-    if (remainingDisplay) remainingDisplay.textContent = formatCurrency(remaining);
+        // Atualizar Resumos
+        const totalSavedEl = document.getElementById('totalSavedDisplay');
+        const progressEl = document.getElementById('savingsProgressDisplay');
+        const remainingEl = document.getElementById('remainingToSaveDisplay');
+
+        if (totalSavedEl) totalSavedEl.textContent = formatCurrency(totalSaved);
+        if (progressEl) {
+            const perc = state.savingsTarget > 0 ? (totalSaved / state.savingsTarget) * 100 : 0;
+            progressEl.textContent = `${Math.min(100, perc).toFixed(1)}%`;
+        }
+        if (remainingEl) {
+            const rem = state.savingsTarget - totalSaved;
+            remainingEl.textContent = formatCurrency(Math.max(0, rem));
+        }
+
+        // Mostrar/Esconder Empty State do Grid
+        const emptyGrid = document.getElementById('emptyGridState');
+        if (emptyGrid) {
+            if (state.savingsGrid.length === 0) emptyGrid.classList.remove('hidden');
+            else emptyGrid.classList.add('hidden');
+        }
+    }
 }
 
 export function renderProjectMembers(members, currentUserEmail) {

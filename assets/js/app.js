@@ -1,6 +1,6 @@
 import { state, elements } from './modules/state.js';
 import { loadItemsFromLocalStorage as loadLocal, saveItemsToLocalStorage as saveLocal } from './modules/storage.js';
-import { calculateCurrentSpending, formatCurrency } from './modules/utils.js';
+import { calculateCurrentSpending, formatCurrency, getTotalEffectiveBudget } from './modules/utils.js';
 import { 
     renderItems, renderRooms, updateDashboard, 
     populateCategorySelects, populateCategoryFilters,
@@ -24,7 +24,7 @@ import {
     syncColorInputs, pickrInstances,
     handleLogout, confirmLogout, fetchLinkData,
     openShare, confirmJoinProject, copyProjectId, shareViaWhatsapp,
-    handleSavingsSubmit, toggleSavingsCell, resetSavings,
+    handleSavingsSubmit, toggleSavingsCell, resetSavings, addManualDeposit,
     loadUserProfile, updateProfile, removePhoto
 } from './modules/events.js';
 import { cloudService } from './classes/CloudService.js';
@@ -46,7 +46,10 @@ function init() {
         items: state.items,
         categories: state.categories,
         rooms: state.rooms,
-        totalBudget: state.totalBudget
+        totalBudget: state.totalBudget,
+        savingsTarget: state.savingsTarget,
+        savingsDate: state.savingsDate,
+        savingsGrid: state.savingsGrid
     });
 
     // 2. EXIBIÇÃO IMEDIATA (Não espera o Firebase para mostrar a página se já houver dados)
@@ -106,8 +109,13 @@ function applyCloudData(data) {
     if (document.getElementById('totalItems') || document.getElementById('totalEstimated')) updateDashboard();
     if (document.getElementById('itemCategory')) populateCategorySelects();
     if (document.getElementById('filterCategory')) populateCategoryFilters();
+    
+    // ATUALIZAR ORÇAMENTO TOTAL (Somado com Cofrinho)
     const budgetInput = document.getElementById('totalBudget');
-    if (budgetInput) budgetInput.value = formatCurrency(state.totalBudget);
+    if (budgetInput) {
+        const totalEffective = getTotalEffectiveBudget();
+        budgetInput.value = formatCurrency(totalEffective);
+    }
     
     // Renderiza detalhes se estiver na página detail.html
     const urlParams = new URLSearchParams(window.location.search);
@@ -313,6 +321,9 @@ function addEventListeners() {
     const resetSavingsBtn = document.getElementById('resetSavingsBtn');
     if (resetSavingsBtn) resetSavingsBtn.onclick = resetSavings;
 
+    const addDepositBtn = document.getElementById('addDepositBtn');
+    if (addDepositBtn) addDepositBtn.onclick = addManualDeposit;
+
     // Perfil
     const profileForm = document.getElementById('profileForm');
     if (profileForm) {
@@ -326,6 +337,7 @@ function addEventListeners() {
     window.editItem = editItem;
     window.deleteItem = deleteItem;
     window.toggleSavingsCell = toggleSavingsCell;
+    window.addManualDeposit = addManualDeposit;
     window.removePhoto = removePhoto;
     window.togglePurchasedStatus = togglePurchasedStatus;
     

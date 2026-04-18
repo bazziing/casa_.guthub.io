@@ -277,6 +277,61 @@ body.auth-loading [data-auth-required] {
     }
 }
 
+/* Cofrinho Estilo Tabuleiro */
+.savings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+}
+
+.savings-cell {
+    aspect-ratio: 1 / 1;
+    border-radius: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 2px solid white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Efeito de Tabuleiro: Alternando cores */
+.savings-cell:nth-child(odd) {
+    background-color: #f5f3ff; /* Roxo clarinho */
+    color: #7c3aed;
+}
+
+.savings-cell:nth-child(even) {
+    background-color: #f0fdf4; /* Verde clarinho */
+    color: #16a34a;
+}
+
+.savings-cell.completed {
+    box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.2);
+}
+
+.savings-cell:hover {
+    transform: scale(1.05) rotate(2deg);
+    z-index: 10;
+}
+
+.savings-author-tag {
+    font-size: 8px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 2rem;
+    margin-top: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    max-width: 80%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .remove-photo-btn {
     position: absolute !important;
     top: 8px !important;

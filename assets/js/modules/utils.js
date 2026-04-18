@@ -6,13 +6,21 @@ export function calculateCurrentSpending() {
         return item.purchased ? total + parseFloat(item.price || 0) : total;
     }, 0);
 
-    // Valor total planejado (tudo na lista)
+    // Valor total planejado (Soma de todos os itens)
     state.totalEstimated = state.items.reduce((total, item) => {
         return total + parseFloat(item.price || 0);
     }, 0);
 }
 
-export function getRoomColor(roomName, type) {
+export function getTotalEffectiveBudget() {
+    const baseBudget = parseFloat(state.totalBudget) || 0;
+    const savingsTotal = state.savingsGrid.reduce((total, cell) => {
+        return total + parseFloat(cell.value || 0);
+    }, 0);
+    return baseBudget + savingsTotal;
+}
+
+export function getRoomColor(category) {
     const room = state.rooms.find(r => r.name === roomName);
     if (!room) return '#b399d4';
     switch(type) {
