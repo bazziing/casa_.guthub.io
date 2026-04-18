@@ -120,21 +120,44 @@ export async function fetchLinkData() {
 }
 
 // ITENS
-export async function togglePurchasedStatus(itemId, isPurchased) {
+export async function togglePurchasedStatus(itemId, forceStatus = null) {
     const item = state.items.find(i => i.id === itemId);
-    if (item) {
-        item.purchased = isPurchased;
+    if (!item) return;
+
+    // 1. ATUALIZAÇÃO OTIMISTA (Muda na hora na tela)
+    const oldStatus = item.purchased;
+    const newStatus = forceStatus !== null ? forceStatus : !item.purchased;
+    item.purchased = newStatus;
+    
+    // Atualizar UI local imediatamente
+    renderItems();
+    updateDashboard();
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomId = urlParams.get('id');
+    if (roomId && window.location.pathname.includes('detail.html')) renderRoomDetail(roomId);
+
+    // 2. SALVAMENTO EM SEGUNDO PLANO
+    const room = state.rooms.find(r => r.name === item.category);
+    
+    try {
         saveItemsToLocalStorage();
-        const room = state.rooms.find(r => r.name === item.category);
-        if (room) await cloudService.saveItem(room.id, item);
         calculateCurrentSpending();
-        // Salvar totais no documento pai
-        await cloudService.saveSettings({ 
-            totalBudget: state.totalBudget, 
-            categories: state.categories,
-            totalEstimated: state.totalEstimated,
-            currentSpending: state.currentSpending
-        });
+        
+        if (room) {
+            // Não usamos 'await' aqui para não travar a UI, deixamos rodar em background
+            cloudService.saveItem(room.id, item);
+            cloudService.saveSettings({ 
+                totalBudget: state.totalBudget, 
+                categories: state.categories,
+                totalEstimated: state.totalEstimated,
+                currentSpending: state.currentSpending
+            });
+        }
+    } catch (error) {
+        console.error("Erro ao alternar status:", error);
+        // Reverter apenas se falhar feio
+        item.purchased = oldStatus;
+        renderItems();
         updateDashboard();
     }
 }
@@ -440,7 +463,7 @@ export async function confirmDeleteRoom() {
     state.roomToDelete = null;
 }
 
-let pickrInstances = {};
+export let pickrInstances = {};
 
 export function syncColorInputs() {
     const pickers = [
@@ -485,10 +508,33 @@ export function syncColorInputs() {
             }
         });
 
-        pickr.on('save', (color) => {
-            const hex = color.toHEXA().toString();
-            document.getElementById(p.hexId).value = hex.toUpperCase();
+        pickr.on('save', async (color) => {
+            const hex = color.toHEXA().toString().toUpperCase();
+            const hexInput = document.getElementById(p.hexId);
+            if (hexInput) hexInput.value = hex;
             pickr.hide();
+
+            // Lógica de Salvamento Automático (Página de Detalhes)
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomId = urlParams.get('id');
+            if (roomId && window.location.pathname.includes('detail.html')) {
+                const room = state.rooms.find(r => r.id === roomId);
+                if (room) {
+                    const colorFieldMap = {
+                        'primaryColorHex': 'primaryColor',
+                        'secondaryColorHex': 'secondaryColor',
+                        'accentColorHex': 'accentColor',
+                        'neutralColorHex': 'neutralColor'
+                    };
+                    const fieldName = colorFieldMap[p.hexId];
+                    room[fieldName] = hex;
+                    
+                    try {
+                        await cloudService.saveRoom(room);
+                        // A UI atualizará sozinha via listenToChanges
+                    } catch (e) { console.error("Erro ao salvar cor rápida:", e); }
+                }
+            }
         });
 
         const hexInput = document.getElementById(p.hexId);

@@ -223,6 +223,60 @@ body.auth-loading [data-auth-required] {
     z-index: 2;
 }
 
+/* Tabela Responsiva (Cards no Mobile) */
+@media (max-width: 768px) {
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    tr {
+        margin-bottom: 1rem;
+        background: white;
+        border: 1px solid #f3e8ff;
+        border-radius: 1.5rem;
+        padding: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    td {
+        border: none;
+        position: relative;
+        padding-left: 50% !important;
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+        text-align: right;
+        min-height: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 1rem;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        text-align: left;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #94a3b8;
+        letter-spacing: 0.05em;
+    }
+
+    td.whitespace-nowrap {
+        white-space: normal !important;
+    }
+}
+
 .remove-photo-btn {
     position: absolute !important;
     top: 8px !important;

@@ -108,27 +108,31 @@ export function renderItems() {
     
     filteredItems.forEach(item => {
         const row = document.createElement('tr');
-        row.className = 'hover:bg-purple-50';
+        row.className = 'hover:bg-purple-50 transition cursor-pointer';
         row.dataset.id = item.id;
-        const priorityClass = `priority-${item.priority}`;
+        
+        const statusBadge = item.purchased 
+            ? '<span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-black uppercase rounded-lg shadow-sm border border-green-200">Comprado</span>'
+            : '<span class="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-black uppercase rounded-lg shadow-sm border border-amber-200">Pendente</span>';
+
+        row.onclick = () => togglePurchasedStatus(item.id);
+
         row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap ${priorityClass}">
-                <label class="inline-flex items-center">
-                    <input type="checkbox" class="form-checkbox h-5 w-5 text-purple-600 rounded focus:ring-purple-500 toggle-purchased" ${item.purchased ? 'checked' : ''}>
-                </label>
+            <td class="px-6 py-4 whitespace-nowrap" data-label="Status">
+                ${statusBadge}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm font-medium text-gray-900">${item.name}</div></td>
-            <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-500">${item.category}</div></td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.priority === 'high' ? 'bg-red-100 text-red-800' : item.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">
-                    ${item.priority === 'high' ? 'Alta' : item.priority === 'medium' ? 'Média' : 'Baixa'}
+            <td class="px-6 py-4 whitespace-nowrap" data-label="Item"><div class="text-sm font-bold text-purple-900">${item.name}</div></td>
+            <td class="px-6 py-4 whitespace-nowrap" data-label="Cômodo"><div class="text-sm text-gray-500">${item.category}</div></td>
+            <td class="px-6 py-4 whitespace-nowrap" data-label="Prioridade">
+                <span class="px-2 py-1 inline-flex text-[10px] leading-5 font-black uppercase rounded-lg ${item.priority === 'high' ? 'bg-red-50 text-red-600 border border-red-100' : item.priority === 'medium' ? 'bg-yellow-50 text-yellow-600 border border-yellow-100' : 'bg-green-50 text-green-600 border border-green-100'}">
+                    ${item.priority === 'high' ? 'Alta Prioridade' : item.priority === 'medium' ? 'Média Prioridade' : 'Baixa Prioridade'}
                 </span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-900">${formatCurrency(parseFloat(item.price))}</div></td>
-            <td class="px-6 py-4 whitespace-nowrap">${item.link ? `<a href="${item.link}" target="_blank" class="text-sm text-purple-600 hover:text-purple-800">Ver</a>` : '<span class="text-sm text-gray-400">-</span>'}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button class="text-purple-600 hover:text-purple-900 mr-3 edit-item">Editar</button>
-                <button class="text-red-600 hover:text-red-900 delete-item">Excluir</button>
+            <td class="px-6 py-4 whitespace-nowrap" data-label="Preço"><div class="text-sm font-mono font-bold text-purple-600">${formatCurrency(parseFloat(item.price))}</div></td>
+            <td class="px-6 py-4 whitespace-nowrap" data-label="Link">${item.link ? `<a href="${item.link}" target="_blank" onclick="event.stopPropagation()" class="p-2 text-purple-400 hover:text-purple-600"><i class="fas fa-external-link-alt text-xs"></i></a>` : '<span class="text-xs text-gray-300">-</span>'}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" data-label="Ações">
+                <button onclick="event.stopPropagation(); editItem('${item.id}')" class="text-purple-600 hover:text-purple-900 mr-3"><i class="fas fa-edit"></i></button>
+                <button onclick="event.stopPropagation(); deleteItem('${item.id}')" class="text-red-600 hover:text-red-900"><i class="fas fa-trash-alt"></i></button>
             </td>`;
         tableBody.appendChild(row);
     });
@@ -150,20 +154,20 @@ export function renderRooms() {
     
     state.rooms.forEach(room => {
         const card = document.createElement('div');
-        card.className = 'bg-white rounded-[2rem] overflow-hidden card-shadow hover:translate-y-[-4px] transition-all duration-300 group cursor-pointer flex flex-col';
+        card.className = 'bg-white rounded-[2rem] overflow-hidden card-shadow hover:translate-y-[-4px] transition-all duration-300 group cursor-pointer flex flex-col h-full';
         
-        // Criar colagem de imagens
+        // Criar colagem de imagens (Topo do Card)
         const images = room.referenceImages || [];
         let collageHtml = '';
         
         if (images.length > 0) {
             const gridClass = images.length === 1 ? 'grid-cols-1' : (images.length === 2 ? 'grid-cols-2' : 'grid-cols-2 grid-rows-2');
-            collageHtml = `<div class="grid ${gridClass} gap-1 h-48 bg-purple-50 shrink-0">
+            collageHtml = `<div class="grid ${gridClass} gap-0.5 h-40 bg-purple-50 shrink-0 overflow-hidden border-b border-purple-50">
                 ${images.map(img => `<img src="${img}" class="w-full h-full object-cover">`).join('')}
             </div>`;
         } else {
-            collageHtml = `<div class="h-48 bg-purple-50 flex items-center justify-center shrink-0">
-                <i class="fas fa-palette text-purple-200 text-4xl"></i>
+            collageHtml = `<div class="h-40 bg-purple-50 flex items-center justify-center shrink-0 border-b border-purple-50">
+                <i class="fas fa-palette text-purple-200 text-3xl"></i>
             </div>`;
         }
 
@@ -171,11 +175,11 @@ export function renderRooms() {
 
         card.innerHTML = `
             ${collageHtml}
-            <div class="p-6 flex-1 flex flex-col">
-                <div class="flex justify-between items-start mb-4 gap-2">
+            <div class="p-5 flex-1 flex flex-col bg-white">
+                <div class="flex justify-between items-start mb-3 gap-2">
                     <div class="min-w-0 flex-1">
-                        <h3 class="font-bold text-purple-900 group-hover:text-purple-600 transition truncate">${room.name}</h3>
-                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">${state.items.filter(i => i.category === room.name).length} itens</p>
+                        <h3 class="font-bold text-purple-900 group-hover:text-purple-600 transition truncate text-sm leading-tight">${room.name}</h3>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">${state.items.filter(i => i.category === room.name).length} itens</p>
                     </div>
                     <div class="flex space-x-1 shrink-0">
                         <button onclick="event.stopPropagation(); editRoom('${room.id}')" class="p-2 text-gray-400 hover:text-purple-600 transition"><i class="fas fa-edit text-xs"></i></button>
@@ -183,11 +187,11 @@ export function renderRooms() {
                     </div>
                 </div>
                 
-                <div class="mt-auto flex items-center space-x-2">
-                    <div class="w-6 h-6 rounded-lg shadow-sm border border-white" style="background-color: ${room.primaryColor}"></div>
-                    <div class="w-6 h-6 rounded-lg shadow-sm border border-white" style="background-color: ${room.secondaryColor}"></div>
-                    <div class="w-6 h-6 rounded-lg shadow-sm border border-white" style="background-color: ${room.accentColor}"></div>
-                    <div class="w-6 h-6 rounded-lg shadow-sm border border-white" style="background-color: ${room.neutralColor}"></div>
+                <div class="mt-auto pt-3 border-t border-purple-50/50 flex items-center space-x-2">
+                    <div class="w-5 h-5 rounded-lg shadow-sm border border-white" style="background-color: ${room.primaryColor}"></div>
+                    <div class="w-5 h-5 rounded-lg shadow-sm border border-white" style="background-color: ${room.secondaryColor}"></div>
+                    <div class="w-5 h-5 rounded-lg shadow-sm border border-white" style="background-color: ${room.accentColor}"></div>
+                    <div class="w-5 h-5 rounded-lg shadow-sm border border-white" style="background-color: ${room.neutralColor}"></div>
                 </div>
             </div>
         `;
@@ -253,19 +257,25 @@ export function renderRoomDetail(roomId) {
             roomItems.forEach(item => {
                 total += parseFloat(item.price);
                 const row = document.createElement('tr');
-                row.className = 'hover:bg-purple-50 transition';
+                row.className = 'hover:bg-purple-50 transition cursor-pointer';
+                row.onclick = () => togglePurchasedStatus(item.id);
+
+                const statusBadge = item.purchased 
+                    ? '<span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-black uppercase rounded-lg shadow-sm border border-green-200">Comprado</span>'
+                    : '<span class="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-black uppercase rounded-lg shadow-sm border border-amber-200">Pendente</span>';
+
                 row.innerHTML = `
-                    <td class="py-4">
-                        <div class="w-2 h-2 rounded-full ${item.purchased ? 'bg-green-500' : 'bg-gray-200'}"></div>
+                    <td class="py-4" data-label="Status">
+                        ${statusBadge}
                     </td>
-                    <td class="py-4">
+                    <td class="py-4" data-label="Item">
                         <div class="flex flex-col">
                             <span class="text-sm font-bold text-purple-900">${item.name}</span>
-                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${item.priority === 'high' ? 'Alta Prioridade' : (item.priority === 'medium' ? 'Média' : 'Baixa')}</span>
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${item.priority === 'high' ? 'Alta Prioridade' : (item.priority === 'medium' ? 'Média Prioridade' : 'Baixa Prioridade')}</span>
                         </div>
                     </td>
-                    <td class="py-4 text-sm font-mono font-bold text-purple-600">${formatCurrency(item.price)}</td>
-                    <td class="py-4 text-right">
+                    <td class="py-4 text-sm font-mono font-bold text-purple-600" data-label="Preço">${formatCurrency(item.price)}</td>
+                    <td class="py-4 text-right" data-label="Ações">
                         <div class="flex justify-end space-x-1">
                             ${item.link ? `<a href="${item.link}" target="_blank" class="p-2 text-purple-400 hover:text-purple-600"><i class="fas fa-external-link-alt text-xs"></i></a>` : ''}
                             <button onclick="editItem('${item.id}')" class="p-2 text-gray-300 hover:text-purple-600"><i class="fas fa-edit text-xs"></i></button>
@@ -525,7 +535,8 @@ export function renderRoomsSummary() {
         grandTotal += roomTotal;
 
         const row = document.createElement('div');
-        row.className = 'flex items-center justify-between p-4 rounded-2xl bg-purple-50/50 border border-purple-100';
+        row.className = 'flex items-center justify-between p-4 rounded-2xl bg-purple-50/50 border border-purple-100 cursor-pointer hover:bg-purple-100 transition';
+        row.onclick = () => window.location.href = `rooms/detail.html?id=${room.id}`;
         row.innerHTML = `
             <div class="flex items-center space-x-3">
                 <div class="w-3 h-3 rounded-full" style="background-color: ${room.primaryColor}"></div>
@@ -579,7 +590,7 @@ export function renderPurchasedItemsSummary() {
                 <span class="font-bold text-gray-800 text-sm">${item.name}</span>
                 <span class="text-[10px] text-gray-400 font-bold uppercase flex items-center">
                     <span class="w-2 h-2 rounded-full mr-1" style="background-color: ${color}"></span>
-                    ${item.category}
+                    ${item.category} • Alta Prioridade
                 </span>
             </div>
             <span class="font-mono font-bold text-green-600 text-sm">${formatCurrency(price)}</span>
@@ -623,7 +634,7 @@ export function renderHighPriorityItems() {
                 <span class="font-bold text-gray-800 text-sm">${item.name}</span>
                 <span class="text-[10px] text-gray-400 font-bold uppercase flex items-center">
                     <span class="w-2 h-2 rounded-full mr-1" style="background-color: ${color}"></span>
-                    ${item.category}
+                    ${item.category} • Alta Prioridade
                 </span>
             </div>
             <span class="font-mono font-bold text-orange-600 text-sm">${formatCurrency(parseFloat(item.price))}</span>
@@ -665,7 +676,7 @@ export function renderMediumPriorityItems() {
                 <span class="font-bold text-gray-800 text-sm">${item.name}</span>
                 <span class="text-[10px] text-gray-400 font-bold uppercase flex items-center">
                     <span class="w-2 h-2 rounded-full mr-1" style="background-color: ${color}"></span>
-                    ${item.category}
+                    ${item.category} • Alta Prioridade
                 </span>
             </div>
             <span class="font-mono font-bold text-amber-600 text-sm">${formatCurrency(parseFloat(item.price))}</span>
@@ -707,7 +718,7 @@ export function renderLowPriorityItems() {
                 <span class="font-bold text-gray-800 text-sm">${item.name}</span>
                 <span class="text-[10px] text-gray-400 font-bold uppercase flex items-center">
                     <span class="w-2 h-2 rounded-full mr-1" style="background-color: ${color}"></span>
-                    ${item.category}
+                    ${item.category} • Alta Prioridade
                 </span>
             </div>
             <span class="font-mono font-bold text-blue-600 text-sm">${formatCurrency(parseFloat(item.price))}</span>
@@ -742,7 +753,8 @@ export function renderCategoriesSummary() {
         const progress = itemCount > 0 ? (purchasedCount / itemCount) * 100 : 0;
 
         const card = document.createElement('div');
-        card.className = 'p-4 rounded-2xl bg-purple-50/50 border border-purple-100';
+        card.className = 'p-4 rounded-2xl bg-purple-50/50 border border-purple-100 cursor-pointer hover:bg-purple-100 transition';
+        card.onclick = () => window.location.href = `rooms/detail.html?id=${room.id}`;
         card.innerHTML = `
             <div class="flex justify-between items-center mb-2">
                 <div class="flex items-center space-x-3">

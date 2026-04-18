@@ -21,7 +21,7 @@ import {
     addOrUpdateItem, addNewCategory, addNewRoom,
     togglePurchasedStatus, editItem, deleteItem, confirmDeleteItem,
     editRoom, deleteRoom, confirmDeleteRoom,
-    syncColorInputs,
+    syncColorInputs, pickrInstances,
     handleLogout, confirmLogout, fetchLinkData,
     openShare, confirmJoinProject, copyProjectId, shareViaWhatsapp,
     handleSavingsSubmit, toggleSavingsCell, resetSavings,
@@ -327,6 +327,21 @@ function addEventListeners() {
     window.deleteItem = deleteItem;
     window.toggleSavingsCell = toggleSavingsCell;
     window.removePhoto = removePhoto;
+    window.togglePurchasedStatus = togglePurchasedStatus;
+    
+    // Edição Rápida de Cores (Página de Detalhes)
+    window.openQuickColorPicker = (type) => {
+        const map = {
+            'primary': 'primaryColorPicker',
+            'secondary': 'secondaryColorPicker',
+            'accent': 'accentColorPicker',
+            'neutral': 'neutralColorPicker'
+        };
+        const pickerId = map[type];
+        if (pickrInstances[pickerId]) {
+            pickrInstances[pickerId].show();
+        }
+    };
 
     // Fechar modais com ESC
     document.addEventListener('keydown', (e) => {
