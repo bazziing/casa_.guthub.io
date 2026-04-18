@@ -12,6 +12,7 @@
     <div id="auth-guard-loader">
         <div class="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
     </div>
+    
     <!-- Sidebar -->
     <aside id="sidebar" class="w-64 bg-white border-r border-purple-100 flex flex-col hidden md:flex">
         <div class="p-6 border-b border-purple-50 flex items-center space-x-3">
@@ -68,118 +69,116 @@
         </header>
 
         <div class="flex-1 overflow-y-auto">
-            <div class="max-w-7xl mx-auto p-6 md:p-10 space-y-6">
-                <div class="flex justify-between items-center">
+            <div class="max-w-7xl mx-auto p-6 md:p-10 space-y-8">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 class="text-2xl font-bold text-purple-900">Lista de Compras</h1>
-                        <p class="text-gray-500 text-sm">Gerencie tudo o que sua casa precisa.</p>
+                        <h1 class="text-2xl font-bold text-purple-900">Lista de Desejos</h1>
+                        <p class="text-gray-500">Gerencie todos os itens planejados para o seu lar.</p>
                     </div>
-                <button id="addItemBtn" class="px-6 py-2 bg-purple-600 text-white rounded-full text-sm font-medium hover:bg-purple-700 transition flex items-center space-x-2 shadow-lg shadow-purple-200">
-                    <i class="fas fa-plus"></i>
-                    <span>Novo Item</span>
-                </button>
-            </div>
+                    <button id="addItemBtn" class="bg-purple-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-purple-200 hover:bg-purple-700 transition flex items-center justify-center space-x-2">
+                        <i class="fas fa-plus"></i>
+                        <span>Novo Item</span>
+                    </button>
+                </div>
 
-            <!-- Filters -->
-            <div class="bg-white p-4 rounded-2xl card-shadow flex flex-wrap gap-4 items-center">
-                <div class="flex-1 min-w-[200px]">
-                    <label class="text-[10px] uppercase text-gray-400 font-bold ml-2">Categoria</label>
-                    <select id="filterCategory" class="w-full bg-purple-50 px-4 py-2 rounded-xl text-sm outline-none border-none focus:ring-2 focus:ring-purple-200">
-                        <option value="">Todas Categorias</option>
-                    </select>
-                </div>
-                <div class="w-40">
-                    <label class="text-[10px] uppercase text-gray-400 font-bold ml-2">Prioridade</label>
-                    <select id="filterPriority" class="w-full bg-purple-50 px-4 py-2 rounded-xl text-sm outline-none border-none focus:ring-2 focus:ring-purple-200">
-                        <option value="">Todas</option>
-                        <option value="low">Baixa</option>
-                        <option value="medium">Média</option>
-                        <option value="high">Alta</option>
-                    </select>
-                </div>
-                <div class="w-40">
-                    <label class="text-[10px] uppercase text-gray-400 font-bold ml-2">Status</label>
-                    <select id="filterStatus" class="w-full bg-purple-50 px-4 py-2 rounded-xl text-sm outline-none border-none focus:ring-2 focus:ring-purple-200">
-                        <option value="">Todos</option>
-                        <option value="purchased">Comprado</option>
-                        <option value="not-purchased">Pendente</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Items Table -->
-            <div class="bg-white rounded-2xl overflow-hidden card-shadow custom-scrollbar">
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-purple-50">
-                        <thead class="bg-purple-50/50">
-                            <tr>
-                                <th class="px-6 py-4 text-left text-[10px] font-bold text-purple-400 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-4 text-left text-[10px] font-bold text-purple-400 uppercase tracking-wider">Item</th>
-                                <th class="px-6 py-4 text-left text-[10px] font-bold text-purple-400 uppercase tracking-wider">Categoria</th>
-                                <th class="px-6 py-4 text-left text-[10px] font-bold text-purple-400 uppercase tracking-wider">Prioridade</th>
-                                <th class="px-6 py-4 text-left text-[10px] font-bold text-purple-400 uppercase tracking-wider">Preço</th>
-                                <th class="px-6 py-4 text-right text-[10px] font-bold text-purple-400 uppercase tracking-wider">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="itemsTableBody" class="divide-y divide-purple-50">
-                            <!-- Items row -->
-                        </tbody>
-                    </table>
-                </div>
-                <div id="emptyState" class="py-20 text-center hidden">
-                    <div class="w-20 h-20 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-box-open text-purple-200 text-3xl"></i>
+                <!-- Filters -->
+                <div class="bg-white p-4 rounded-2xl card-shadow flex flex-wrap gap-4 items-center">
+                    <div class="flex-1 min-w-[200px]">
+                        <select id="filterCategory" class="w-full bg-purple-50 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-purple-200 outline-none">
+                            <option value="">Todos os Cômodos</option>
+                        </select>
                     </div>
-                    <h3 class="text-gray-500 font-medium">Nenhum item encontrado</h3>
-                    <p class="text-gray-400 text-xs mt-1">Adicione novos itens para vê-los aqui.</p>
+                    <div class="flex-1 min-w-[200px]">
+                        <select id="filterPriority" class="w-full bg-purple-50 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-purple-200 outline-none">
+                            <option value="">Todas Prioridades</option>
+                            <option value="high">Alta Prioridade</option>
+                            <option value="medium">Média Prioridade</option>
+                            <option value="low">Baixa Prioridade</option>
+                        </select>
+                    </div>
+                    <div class="flex-1 min-w-[200px]">
+                        <select id="filterStatus" class="w-full bg-purple-50 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-purple-200 outline-none">
+                            <option value="">Todos Status</option>
+                            <option value="purchased">Comprado</option>
+                            <option value="not-purchased">Pendente</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="bg-white rounded-[2rem] card-shadow overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-purple-50/50 border-b border-purple-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                                    <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Item</th>
+                                    <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Cômodo</th>
+                                    <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Prioridade</th>
+                                    <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Preço</th>
+                                    <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Link</th>
+                                    <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsTableBody" class="divide-y divide-purple-50/50">
+                                <!-- Items will be injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="emptyState" class="py-20 text-center hidden">
+                        <div class="w-20 h-20 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-200 text-3xl">
+                            <i class="fas fa-box-open"></i>
+                        </div>
+                        <h3 class="text-gray-500 font-medium text-lg">Nenhum item encontrado</h3>
+                        <p class="text-gray-400 text-sm mt-1">Tente ajustar seus filtros ou adicione um novo item.</p>
+                        <button id="emptyAddItemBtn" class="mt-6 text-purple-600 font-bold hover:underline">Adicionar meu primeiro item</button>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
+    <!-- Modals -->
     <!-- Modal Add Item -->
     <div id="addItemModal" class="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
-        <div class="bg-white rounded-[2rem] w-full max-w-md p-8 card-shadow custom-scrollbar">
+        <div class="bg-white rounded-[2rem] w-full max-w-lg p-8 card-shadow custom-scrollbar">
             <h3 class="text-xl font-bold text-purple-900 mb-6">Novo Item</h3>
-            <form id="itemForm" class="space-y-4">
+            <form id="itemForm" class="space-y-6">
                 <input type="hidden" id="editItemId">
-                <div>
-                    <label class="text-xs font-bold text-gray-400 uppercase ml-1">Nome do Produto</label>
-                    <input type="text" id="itemName" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Categoria</label>
-                        <div class="flex space-x-2">
-                            <select id="itemCategory" class="flex-1 px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200 text-sm" required></select>
-                            <button type="button" id="addCategoryBtn" class="px-3 bg-purple-100 text-purple-600 rounded-xl hover:bg-purple-200">+</button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="md:col-span-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Link do Produto (Opcional)</label>
+                        <div class="flex space-x-2 mt-1">
+                            <input type="url" id="itemLink" placeholder="https://..." class="flex-1 px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200">
+                            <button type="button" id="fetchLinkDataBtn" class="px-4 bg-purple-100 text-purple-600 rounded-xl hover:bg-purple-200 transition"><i class="fas fa-magic"></i></button>
                         </div>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Nome do Item</label>
+                        <input type="text" id="itemName" placeholder="Ex: Sofá 3 lugares" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Cômodo</label>
+                        <select id="itemCategory" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200 appearance-none" required>
+                            <!-- Options will be injected -->
+                        </select>
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-400 uppercase ml-1">Prioridade</label>
-                        <select id="itemPriority" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200 text-sm">
-                            <option value="low">Baixa</option>
-                            <option value="medium" selected>Média</option>
-                            <option value="high">Alta</option>
+                        <select id="itemPriority" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200 appearance-none" required>
+                            <option value="low">Baixa Prioridade</option>
+                            <option value="medium" selected>Média Prioridade</option>
+                            <option value="high">Alta Prioridade</option>
                         </select>
                     </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="text-xs font-bold text-gray-400 uppercase ml-1">Preço Estimado</label>
-                        <input type="number" id="itemPrice" step="0.01" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Link (Opcional)</label>
-                        <div class="flex space-x-2">
-                            <input type="url" id="itemLink" class="flex-1 px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200 text-sm" placeholder="Cole o link aqui">
-                            <button type="button" id="fetchLinkDataBtn" class="px-3 bg-purple-100 text-purple-600 rounded-xl hover:bg-purple-200 transition" title="Buscar dados automaticamente">
-                                <i class="fas fa-magic"></i>
-                            </button>
-                        </div>
+                        <input type="number" id="itemPrice" step="0.01" placeholder="0,00" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
                     </div>
                 </div>
-                <div class="flex space-x-3 pt-6">
+
+                <div class="flex space-x-3 pt-4">
                     <button type="button" id="cancelItemBtn" class="flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Cancelar</button>
                     <button type="submit" class="flex-1 py-3 bg-purple-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-purple-200 hover:bg-purple-700 transition">Salvar Item</button>
                 </div>
@@ -187,123 +186,17 @@
         </div>
     </div>
 
-    <!-- Modal Add Category -->
-    <div id="addCategoryModal" class="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+    <!-- Modal Category (Reutilizado para adicionar no voo) -->
+    <div id="addCategoryModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
         <div class="bg-white rounded-[2rem] w-full max-w-xs p-8 card-shadow text-center">
             <h3 class="text-xl font-bold text-purple-900 mb-6">Nova Categoria</h3>
             <form id="categoryForm" class="space-y-4">
-                <input type="text" id="newCategoryName" placeholder="Ex: Cozinha" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
+                <input type="text" id="newCategoryName" placeholder="Ex: Escritório" class="w-full px-4 py-3 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 focus:ring-purple-200" required>
                 <div class="flex space-x-2 pt-4">
                     <button type="button" id="cancelCategoryBtn" class="flex-1 py-3 text-gray-400 text-sm font-bold hover:bg-gray-50 rounded-2xl transition">Cancelar</button>
                     <button type="submit" class="flex-1 py-3 bg-purple-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-purple-200 hover:bg-purple-700 transition">Criar</button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- Share Modal -->
-    <div id="shareModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
-        <div class="bg-white rounded-[2rem] w-full max-w-md p-8 card-shadow custom-scrollbar">
-            <div class="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-6">
-                <i class="fas fa-users text-purple-600 text-2xl"></i>
-            </div>
-            <h3 class="text-xl font-bold text-purple-900 text-center mb-2">Compartilhar Lista</h3>
-            <p class="text-gray-500 text-center mb-6 text-sm">O casal pode acessar a mesma lista usando o código abaixo.</p>
-            
-            <div class="space-y-6">
-                <!-- My Code -->
-                <div class="space-y-3">
-                    <button id="copyProjectIdBtn" class="w-full text-left bg-purple-50 p-4 rounded-2xl border border-purple-100 hover:bg-purple-100 transition group">
-                        <label class="text-[10px] font-bold text-purple-400 uppercase tracking-widest ml-1 cursor-pointer">Seu Código de Acesso</label>
-                        <div class="flex items-center justify-between mt-1">
-                            <span id="displayProjectId" class="font-mono font-bold text-purple-900">Carregando...</span>
-                            <div class="text-purple-600 group-hover:scale-110 transition p-2">
-                                <i class="fas fa-copy"></i>
-                            </div>
-                        </div>
-                    </button>
-                    
-                    <button id="shareWhatsappBtn" class="w-full flex items-center justify-center space-x-2 py-3 bg-green-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-green-100 hover:bg-green-600 transition">
-                        <i class="fab fa-whatsapp text-lg"></i>
-                        <span>Enviar via WhatsApp</span>
-                    </button>
-                </div>
-
-                <div class="relative">
-                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-100"></div></div>
-                    <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-300 font-bold">OU</span></div>
-                </div>
-
-                <!-- Join Code -->
-                <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Entrar em outra lista</label>
-                    <div class="flex space-x-2 mt-1">
-                        <input type="text" id="joinProjectIdInput" placeholder="Cole o código do parceiro" class="flex-1 px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-purple-200 text-sm">
-                        <button id="confirmJoinProjectBtn" class="px-4 bg-purple-600 text-white rounded-xl font-bold text-sm hover:bg-purple-700 transition">Conectar</button>
-                    </div>
-                </div>
-
-                <!-- Project Members -->
-                <div id="projectMembersSection" class="pt-4 border-t border-purple-50">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Membros Conectados</label>
-                    <div id="projectMembersList" class="mt-2 space-y-2">
-                        <!-- Members will be injected here -->
-                        <div class="flex items-center space-x-2 p-2 animate-pulse">
-                            <div class="w-8 h-8 rounded-full bg-purple-100"></div>
-                            <div class="h-4 bg-purple-50 rounded w-24"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-8">
-                <button id="closeShareModalBtn" class="w-full py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Fechar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Item Confirmation Modal -->
-    <div id="deleteItemModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
-        <div class="bg-white rounded-[2rem] w-full max-sm p-8 card-shadow custom-scrollbar">
-            <div class="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-6">
-                <i class="fas fa-trash-alt text-red-500 text-2xl"></i>
-            </div>
-            <h3 class="text-xl font-bold text-purple-900 text-center mb-2">Excluir Item?</h3>
-            <p class="text-gray-500 text-center mb-8 leading-relaxed">Esta ação não pode ser desfeita. O item será removido permanentemente da sua lista.</p>
-            <div class="flex space-x-3">
-                <button id="cancelDeleteItemBtn" class="flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Cancelar</button>
-                <button id="confirmDeleteItemBtn" class="flex-1 py-3 bg-red-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-200 hover:bg-red-600 transition text-center">Excluir</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Logout Confirmation Modal -->
-    <div id="logoutModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
-        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow custom-scrollbar">
-            <div class="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-6">
-                <i class="fas fa-sign-out-alt text-red-500 text-2xl"></i>
-            </div>
-            <h3 class="text-xl font-bold text-purple-900 text-center mb-2">Já vai embora?</h3>
-            <p class="text-gray-500 text-center mb-8 leading-relaxed">Sua lista e cores ficarão salvas com segurança na nuvem para quando você voltar.</p>
-            <div class="flex space-x-3">
-                <button id="cancelLogoutBtn" class="flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Ficar</button>
-                <button id="confirmLogoutBtn" class="flex-1 py-3 bg-red-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-200 hover:bg-red-600 transition text-center">Sair</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Message Modal (Alert/Confirm) -->
-    <div id="messageModal" class="fixed inset-0 z-[200] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
-        <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow text-center">
-            <div id="messageIconContainer" class="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-6">
-                <i id="messageIcon" class="fas fa-info-circle text-purple-600 text-2xl"></i>
-            </div>
-            <h3 id="messageTitle" class="text-xl font-bold text-purple-900 mb-2">Aviso</h3>
-            <p id="messageContent" class="text-gray-500 mb-8 leading-relaxed">Mensagem aqui...</p>
-            <div id="messageActions" class="flex space-x-3">
-                <button id="messageCancelBtn" class="hidden flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Cancelar</button>
-                <button id="messageConfirmBtn" class="flex-1 py-3 bg-purple-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-purple-200 hover:bg-purple-700 transition">Entendi</button>
-            </div>
         </div>
     </div>
 

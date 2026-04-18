@@ -1,6 +1,98 @@
 import { state, elements } from './state.js';
 import { getRoomColor, formatCurrency, getTotalEffectiveBudget } from './utils.js';
 
+export function injectCommonModals() {
+    // Evita injetar duplicado
+    if (document.getElementById('shareModal')) return;
+
+    const modalContainer = document.createElement('div');
+    modalContainer.id = 'common-modals-container';
+    modalContainer.innerHTML = `
+        <!-- Share Modal -->
+        <div id="shareModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+            <div class="bg-white rounded-[2rem] w-full max-w-md p-8 card-shadow custom-scrollbar">
+                <div class="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-users text-purple-600 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-purple-900 text-center mb-2">Compartilhar Lista</h3>
+                <p class="text-gray-500 text-center mb-6 text-sm">O casal pode acessar a mesma lista usando o código abaixo.</p>
+                
+                <div class="space-y-6">
+                    <div class="space-y-3">
+                        <button id="copyProjectIdBtn" class="w-full text-left bg-purple-50 p-4 rounded-2xl border border-purple-100 hover:bg-purple-100 transition group">
+                            <label class="text-[10px] font-bold text-purple-400 uppercase tracking-widest ml-1 cursor-pointer">Seu Código de Acesso</label>
+                            <div class="flex items-center justify-between mt-1">
+                                <span id="displayProjectId" class="font-mono font-bold text-purple-900">Carregando...</span>
+                                <div class="text-purple-600 group-hover:scale-110 transition p-2">
+                                    <i class="fas fa-copy"></i>
+                                </div>
+                            </div>
+                        </button>
+                        
+                        <button id="shareWhatsappBtn" class="w-full flex items-center justify-center space-x-2 py-3 bg-green-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-green-100 hover:bg-green-600 transition">
+                            <i class="fab fa-whatsapp text-lg"></i>
+                            <span>Enviar via WhatsApp</span>
+                        </button>
+                    </div>
+
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-100"></div></div>
+                        <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-300 font-bold">OU</span></div>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Entrar em outra lista</label>
+                        <div class="flex space-x-2 mt-1">
+                            <input type="text" id="joinProjectIdInput" placeholder="Cole o código do parceiro" class="flex-1 px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-purple-200 text-sm">
+                            <button id="confirmJoinProjectBtn" class="px-4 bg-purple-600 text-white rounded-xl font-bold text-sm hover:bg-purple-700 transition">Conectar</button>
+                        </div>
+                    </div>
+
+                    <div id="projectMembersSection" class="pt-4 border-t border-purple-50">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Membros Conectados</label>
+                        <div id="projectMembersList" class="mt-2 space-y-2"></div>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <button id="closeShareModalBtn" class="w-full py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Fechar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Message Modal (Alert/Confirm) -->
+        <div id="messageModal" class="fixed inset-0 z-[200] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+            <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow text-center">
+                <div id="messageIconContainer" class="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-6">
+                    <i id="messageIcon" class="fas fa-info-circle text-purple-600 text-2xl"></i>
+                </div>
+                <h3 id="messageTitle" class="text-xl font-bold text-purple-900 mb-2">Aviso</h3>
+                <p id="messageContent" class="text-gray-500 mb-8 leading-relaxed">Mensagem aqui...</p>
+                <div id="messageActions" class="flex space-x-3">
+                    <button id="messageCancelBtn" class="hidden flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Cancelar</button>
+                    <button id="messageConfirmBtn" class="flex-1 py-3 bg-purple-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-purple-200 hover:bg-purple-700 transition">Entendi</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logout Modal -->
+        <div id="logoutModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-purple-900/20 backdrop-blur-sm modal modal-hidden px-4">
+            <div class="bg-white rounded-[2rem] w-full max-w-sm p-8 card-shadow custom-scrollbar">
+                <div class="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-sign-out-alt text-red-500 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-purple-900 text-center mb-2">Já vai embora?</h3>
+                <p class="text-gray-500 text-center mb-8 leading-relaxed">Sua lista e cores ficarão salvas com segurança na nuvem para quando você voltar.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelLogoutBtn" class="flex-1 py-3 text-gray-400 font-bold text-sm hover:bg-gray-50 rounded-2xl transition">Ficar</button>
+                    <button id="confirmLogoutBtn" class="flex-1 py-3 bg-red-50 text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-200 hover:bg-red-600 transition text-center">Sair</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modalContainer);
+}
+
 export function updateDashboard() {
     // Verificar se estamos em uma página que tem os elementos do dashboard
     const currentSpendingEl = document.getElementById('currentSpending');
@@ -118,14 +210,12 @@ export function renderItems() {
     
     filteredItems.forEach(item => {
         const row = document.createElement('tr');
-        row.className = 'hover:bg-purple-50 transition cursor-pointer';
+        row.className = 'hover:bg-purple-50 transition'; // Removi cursor-pointer da linha
         row.dataset.id = item.id;
         
         const statusBadge = item.purchased 
-            ? '<span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-black uppercase rounded-lg shadow-sm border border-green-200">Comprado</span>'
-            : '<span class="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-black uppercase rounded-lg shadow-sm border border-amber-200">Pendente</span>';
-
-        row.onclick = () => togglePurchasedStatus(item.id);
+            ? `<span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-black uppercase rounded-lg shadow-sm border border-green-200 cursor-pointer hover:bg-green-200 transition toggle-status-badge">Comprado</span>`
+            : `<span class="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-black uppercase rounded-lg shadow-sm border border-amber-200 cursor-pointer hover:bg-amber-200 transition toggle-status-badge">Pendente</span>`;
 
         row.innerHTML = `
             <td class="px-6 py-4 whitespace-nowrap" data-label="Status">
@@ -134,16 +224,26 @@ export function renderItems() {
             <td class="px-6 py-4 whitespace-nowrap" data-label="Item"><div class="text-sm font-bold text-purple-900">${item.name}</div></td>
             <td class="px-6 py-4 whitespace-nowrap" data-label="Cômodo"><div class="text-sm text-gray-500">${item.category}</div></td>
             <td class="px-6 py-4 whitespace-nowrap" data-label="Prioridade">
-                <span class="px-2 py-1 inline-flex text-[10px] leading-5 font-black uppercase rounded-lg ${item.priority === 'high' ? 'bg-red-50 text-red-600 border border-red-100' : item.priority === 'medium' ? 'bg-yellow-50 text-yellow-600 border border-yellow-100' : 'bg-green-50 text-green-600 border border-green-100'}">
+                <span class="px-2 py-1 inline-flex text-[10px] font-black uppercase rounded-lg ${item.priority === 'high' ? 'bg-red-50 text-red-600 border border-red-100' : item.priority === 'medium' ? 'bg-yellow-50 text-yellow-600 border border-yellow-100' : 'bg-green-50 text-green-600 border border-green-100'}">
                     ${item.priority === 'high' ? 'Alta Prioridade' : item.priority === 'medium' ? 'Média Prioridade' : 'Baixa Prioridade'}
                 </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap" data-label="Preço"><div class="text-sm font-mono font-bold text-purple-600">${formatCurrency(parseFloat(item.price))}</div></td>
-            <td class="px-6 py-4 whitespace-nowrap" data-label="Link">${item.link ? `<a href="${item.link}" target="_blank" onclick="event.stopPropagation()" class="p-2 text-purple-400 hover:text-purple-600"><i class="fas fa-external-link-alt text-xs"></i></a>` : '<span class="text-xs text-gray-300">-</span>'}</td>
+            <td class="px-6 py-4 whitespace-nowrap" data-label="Link">${item.link ? `<a href="${item.link}" target="_blank" class="p-2 text-purple-400 hover:text-purple-600"><i class="fas fa-external-link-alt text-xs"></i></a>` : '<span class="text-xs text-gray-300">-</span>'}</td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" data-label="Ações">
-                <button onclick="event.stopPropagation(); editItem('${item.id}')" class="text-purple-600 hover:text-purple-900 mr-3"><i class="fas fa-edit"></i></button>
-                <button onclick="event.stopPropagation(); deleteItem('${item.id}')" class="text-red-600 hover:text-red-900"><i class="fas fa-trash-alt"></i></button>
+                <button onclick="editItem('${item.id}')" class="text-purple-600 hover:text-purple-900 mr-3"><i class="fas fa-edit"></i></button>
+                <button onclick="deleteItem('${item.id}')" class="text-red-600 hover:text-red-900"><i class="fas fa-trash-alt"></i></button>
             </td>`;
+        
+        // Adicionar evento apenas no badge de status
+        const badge = row.querySelector('.toggle-status-badge');
+        if (badge) {
+            badge.onclick = (e) => {
+                e.stopPropagation();
+                togglePurchasedStatus(item.id);
+            };
+        }
+
         tableBody.appendChild(row);
     });
 }
@@ -268,7 +368,11 @@ export function renderRoomDetail(roomId) {
                 total += parseFloat(item.price);
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-purple-50 transition cursor-pointer';
-                row.onclick = () => togglePurchasedStatus(item.id);
+                row.onclick = (e) => {
+            // Se clicar em um botão ou link, não alterna o status
+            if (e.target.closest('button') || e.target.closest('a')) return;
+            togglePurchasedStatus(item.id);
+        };
 
                 const statusBadge = item.purchased 
                     ? '<span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-black uppercase rounded-lg shadow-sm border border-green-200">Comprado</span>'
@@ -817,9 +921,17 @@ export function renderSavingsGrid() {
             const cellEl = document.createElement('div');
             cellEl.className = `savings-cell completed cursor-pointer group relative`;
             cellEl.dataset.index = index;
+            
+            // Formatar a data (ex: 17/04)
+            const date = cell.timestamp ? new Date(cell.timestamp) : new Date();
+            const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+
             cellEl.innerHTML = `
                 <span class="text-xs font-black leading-tight">${formatCurrency(cell.value)}</span>
-                <span class="savings-author-tag">${cell.author || 'Alguém'}</span>
+                <div class="flex flex-col items-center mt-1">
+                    <span class="savings-author-tag">${cell.author || 'Alguém'}</span>
+                    <span class="text-[7px] text-purple-400 font-bold mt-0.5 opacity-70">${formattedDate}</span>
+                </div>
                 <div class="absolute inset-0 bg-red-500/90 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-2xl transition-opacity z-10">
                     <i class="fas fa-trash-alt text-sm"></i>
                 </div>

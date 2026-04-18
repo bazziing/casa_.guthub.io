@@ -15,12 +15,12 @@ import {
     openMediumPriorityModal, closeMediumPriorityModal,
     openLowPriorityModal, closeLowPriorityModal,
     openCategoriesSummaryModal, closeCategoriesSummaryModal,
-    renderSavingsGrid, renderRoomDetail
+    renderSavingsGrid, renderRoomDetail, injectCommonModals
 } from './modules/ui.js';
 import { 
     addOrUpdateItem, addNewCategory, addNewRoom,
-    togglePurchasedStatus, editItem, deleteItem, confirmDeleteItem,
-    editRoom, deleteRoom, confirmDeleteRoom,
+    togglePurchasedStatus, editItem, deleteItem,
+    editRoom, deleteRoom,
     syncColorInputs, pickrInstances,
     handleLogout, confirmLogout, fetchLinkData,
     openShare, confirmJoinProject, copyProjectId, shareViaWhatsapp,
@@ -30,6 +30,9 @@ import {
 import { cloudService } from './classes/CloudService.js';
 
 function init() {
+    // 0. INJETAR MODAIS COMUNS (Centralização Total)
+    injectCommonModals();
+
     // 1. CARREGAMENTO INSTANTÂNEO (OFFLINE FIRST)
     loadLocal();
     
@@ -156,7 +159,7 @@ function addEventListeners() {
     if (cancelDeleteItemBtn) cancelDeleteItemBtn.onclick = () => closeDeleteConfirmModal('item');
 
     const confirmDeleteRoomBtn = document.getElementById('confirmDeleteRoomBtn');
-    if (confirmDeleteRoomBtn) confirmDeleteRoomBtn.onclick = confirmDeleteRoom;
+    // confirmDeleteRoom removido pois a confirmação agora é via showConfirm interno
 
     const cancelDeleteRoomBtn = document.getElementById('cancelDeleteRoomBtn');
     if (cancelDeleteRoomBtn) cancelDeleteRoomBtn.onclick = () => closeDeleteConfirmModal('room');

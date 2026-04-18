@@ -189,8 +189,18 @@ export async function addOrUpdateItem(e) {
         submitBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Salvando...';
 
         let item;
+        let oldRoomId = null;
+
         if (elements.editItemId?.value) {
             const index = state.items.findIndex(i => i.id === elements.editItemId.value);
+            const oldItem = state.items[index];
+            
+            // Se mudou de categoria, precisamos saber de qual cômodo deletar
+            if (oldItem.category !== category) {
+                const oldRoom = state.rooms.find(r => r.name === oldItem.category);
+                if (oldRoom) oldRoomId = oldRoom.id;
+            }
+
             state.items[index] = { ...state.items[index], name, category, priority, price, link: link || null };
             item = state.items[index];
         } else {
@@ -199,6 +209,12 @@ export async function addOrUpdateItem(e) {
         }
 
         saveItemsToLocalStorage();
+        
+        // Se mudou de cômodo, deleta do antigo primeiro
+        if (oldRoomId) {
+            await cloudService.deleteItem(oldRoomId, item.id);
+        }
+
         await cloudService.saveItem(room.id, item);
         calculateCurrentSpending();
         // Salvar totais consolidados no documento pai
@@ -220,33 +236,32 @@ export async function addOrUpdateItem(e) {
 }
 
 export async function deleteItem(itemId) {
-    state.itemToDelete = itemId;
-    openDeleteConfirmModal('item');
-}
-
-export async function confirmDeleteItem() {
-    const itemId = state.itemToDelete;
-    if (!itemId) return;
-
     const item = state.items.find(i => i.id === itemId);
-    const room = state.rooms.find(r => r.name === item.category);
-    state.items = state.items.filter(i => i.id !== itemId);
-    saveItemsToLocalStorage();
-    
-    if (room) await cloudService.deleteItem(room.id, itemId);
-    
-    calculateCurrentSpending();
-    await cloudService.saveSettings({ 
-        totalBudget: state.totalBudget, 
-        categories: state.categories,
-        totalEstimated: state.totalEstimated,
-        currentSpending: state.currentSpending
-    });
-    
-    renderItems();
-    updateDashboard();
-    closeDeleteConfirmModal('item');
-    state.itemToDelete = null;
+    if (!item) return;
+
+    const confirmed = await showConfirm(`Deseja realmente excluir o item "${item.name}"?`, 'Excluir Item', 'Sim, excluir');
+    if (confirmed) {
+        const room = state.rooms.find(r => r.name === item.category);
+        state.items = state.items.filter(i => i.id !== itemId);
+        saveItemsToLocalStorage();
+        
+        if (room) await cloudService.deleteItem(room.id, itemId);
+        
+        calculateCurrentSpending();
+        await cloudService.saveSettings({ 
+            totalBudget: state.totalBudget, 
+            categories: state.categories,
+            totalEstimated: state.totalEstimated,
+            currentSpending: state.currentSpending
+        });
+        
+        renderItems();
+        updateDashboard();
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomId = urlParams.get('id');
+        if (roomId && window.location.pathname.includes('detail.html')) renderRoomDetail(roomId);
+    }
 }
 
 // COMPARTILHAMENTO
