@@ -149,22 +149,134 @@ export function renderRooms() {
     emptyRoomsState?.classList.add('hidden');
     
     state.rooms.forEach(room => {
-        const roomCard = document.createElement('div');
-        roomCard.className = 'bg-white rounded-xl p-6 card-shadow border-l-4';
-        roomCard.style.borderLeftColor = room.primaryColor;
-        roomCard.innerHTML = `
-            <div class="flex justify-between items-start mb-4 gap-2">
-                <h3 class="text-lg font-bold text-purple-900 truncate" title="${room.name}">${room.name}</h3>
-                <div class="flex space-x-1 shrink-0">
-                    <button class="p-2 text-purple-600 hover:bg-purple-50 rounded-lg edit-room" data-id="${room.id}"><i class="fas fa-edit text-xs"></i></button>
-                    <button class="p-2 text-red-600 hover:bg-red-50 rounded-lg delete-room" data-id="${room.id}"><i class="fas fa-trash text-xs"></i></button>
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-[2rem] overflow-hidden card-shadow hover:translate-y-[-4px] transition-all duration-300 group cursor-pointer flex flex-col';
+        
+        // Criar colagem de imagens
+        const images = room.referenceImages || [];
+        let collageHtml = '';
+        
+        if (images.length > 0) {
+            const gridClass = images.length === 1 ? 'grid-cols-1' : (images.length === 2 ? 'grid-cols-2' : 'grid-cols-2 grid-rows-2');
+            collageHtml = `<div class="grid ${gridClass} gap-1 h-48 bg-purple-50 shrink-0">
+                ${images.map(img => `<img src="${img}" class="w-full h-full object-cover">`).join('')}
+            </div>`;
+        } else {
+            collageHtml = `<div class="h-48 bg-purple-50 flex items-center justify-center shrink-0">
+                <i class="fas fa-palette text-purple-200 text-4xl"></i>
+            </div>`;
+        }
+
+        card.onclick = () => window.location.href = `detail.html?id=${room.id}`;
+
+        card.innerHTML = `
+            ${collageHtml}
+            <div class="p-6 flex-1 flex flex-col">
+                <div class="flex justify-between items-start mb-4 gap-2">
+                    <div class="min-w-0 flex-1">
+                        <h3 class="font-bold text-purple-900 group-hover:text-purple-600 transition truncate">${room.name}</h3>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">${state.items.filter(i => i.category === room.name).length} itens</p>
+                    </div>
+                    <div class="flex space-x-1 shrink-0">
+                        <button onclick="event.stopPropagation(); editRoom('${room.id}')" class="p-2 text-gray-400 hover:text-purple-600 transition"><i class="fas fa-edit text-xs"></i></button>
+                        <button onclick="event.stopPropagation(); deleteRoom('${room.id}')" class="p-2 text-gray-400 hover:text-red-500 transition"><i class="fas fa-trash-alt text-xs"></i></button>
+                    </div>
+                </div>
+                
+                <div class="mt-auto flex items-center space-x-2">
+                    <div class="w-6 h-6 rounded-lg shadow-sm border border-white" style="background-color: ${room.primaryColor}"></div>
+                    <div class="w-6 h-6 rounded-lg shadow-sm border border-white" style="background-color: ${room.secondaryColor}"></div>
+                    <div class="w-6 h-6 rounded-lg shadow-sm border border-white" style="background-color: ${room.accentColor}"></div>
+                    <div class="w-6 h-6 rounded-lg shadow-sm border border-white" style="background-color: ${room.neutralColor}"></div>
                 </div>
             </div>
-            <div class="space-y-3 flex-1">
-                <div class="flex items-center text-xs"><span class="color-preview w-6 h-6" style="background-color: ${room.primaryColor};"></span><span>${room.primaryColor}</span></div>
-            </div>`;
-        container.appendChild(roomCard);
+        `;
+        container.appendChild(card);
     });
+}
+
+export function renderRoomDetail(roomId) {
+    const room = state.rooms.find(r => r.id === roomId);
+    if (!room) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    // Título e Nome
+    const nameEl = document.getElementById('roomDetailName');
+    if (nameEl) nameEl.textContent = room.name;
+
+    // Moodboard (Collage)
+    const collageContainer = document.getElementById('roomDetailCollage');
+    if (collageContainer) {
+        const images = room.referenceImages || [];
+        if (images.length > 0) {
+            const gridClass = images.length === 1 ? 'grid-cols-1' : (images.length === 2 ? 'grid-cols-2' : 'grid-cols-2 grid-rows-2');
+            collageContainer.className = `grid ${gridClass} gap-2 aspect-square rounded-2xl overflow-hidden bg-purple-50`;
+            collageContainer.innerHTML = images.map(img => `<img src="${img}" class="w-full h-full object-cover">`).join('');
+        } else {
+            collageContainer.innerHTML = `<div class="col-span-2 flex flex-col items-center justify-center text-purple-200 p-8 text-center">
+                <i class="fas fa-images text-4xl mb-2"></i>
+                <p class="text-[10px] font-bold uppercase tracking-widest">Sem imagens de referência</p>
+            </div>`;
+        }
+    }
+
+    // Cores
+    const colors = [
+        { id: 'color1', val: room.primaryColor },
+        { id: 'color2', val: room.secondaryColor },
+        { id: 'color3', val: room.accentColor },
+        { id: 'color4', val: room.neutralColor }
+    ];
+    colors.forEach(c => {
+        const el = document.getElementById(c.id);
+        if (el) el.style.backgroundColor = c.val;
+    });
+
+    // Lista de Itens do Cômodo
+    const itemsList = document.getElementById('roomItemsList');
+    const emptyState = document.getElementById('emptyRoomItemsState');
+    const totalEl = document.getElementById('roomDetailTotal');
+    
+    if (itemsList) {
+        itemsList.innerHTML = '';
+        const roomItems = state.items.filter(i => i.category === room.name);
+        
+        if (roomItems.length === 0) {
+            emptyState?.classList.remove('hidden');
+            totalEl.textContent = formatCurrency(0);
+        } else {
+            emptyState?.classList.add('hidden');
+            let total = 0;
+            
+            roomItems.forEach(item => {
+                total += parseFloat(item.price);
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-purple-50 transition';
+                row.innerHTML = `
+                    <td class="py-4">
+                        <div class="w-2 h-2 rounded-full ${item.purchased ? 'bg-green-500' : 'bg-gray-200'}"></div>
+                    </td>
+                    <td class="py-4">
+                        <div class="flex flex-col">
+                            <span class="text-sm font-bold text-purple-900">${item.name}</span>
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${item.priority === 'high' ? 'Alta Prioridade' : (item.priority === 'medium' ? 'Média' : 'Baixa')}</span>
+                        </div>
+                    </td>
+                    <td class="py-4 text-sm font-mono font-bold text-purple-600">${formatCurrency(item.price)}</td>
+                    <td class="py-4 text-right">
+                        <div class="flex justify-end space-x-1">
+                            ${item.link ? `<a href="${item.link}" target="_blank" class="p-2 text-purple-400 hover:text-purple-600"><i class="fas fa-external-link-alt text-xs"></i></a>` : ''}
+                            <button onclick="editItem('${item.id}')" class="p-2 text-gray-300 hover:text-purple-600"><i class="fas fa-edit text-xs"></i></button>
+                        </div>
+                    </td>
+                `;
+                itemsList.appendChild(row);
+            });
+            totalEl.textContent = formatCurrency(total);
+        }
+    }
 }
 
 export function populateCategorySelects() {
@@ -217,6 +329,12 @@ export function closeAddRoomModal() {
     document.getElementById('roomForm')?.reset(); 
     const editId = document.getElementById('editRoomId');
     if (editId) editId.value = ''; 
+    
+    // Limpar imagens de preview (Apenas nos slots corretos)
+    const imageLabels = document.querySelectorAll('.room-image-slot');
+    imageLabels.forEach(label => {
+        label.innerHTML = `<i class="fas fa-plus text-xs"></i><input type="file" class="hidden room-image-input" accept="image/*">`;
+    });
 }
 
 export function openAddCategoryModal() { toggleModal('addCategoryModal', true); }

@@ -1,21 +1,28 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
     getFirestore, doc, setDoc, getDoc, getDocs, collection, 
-    deleteDoc, onSnapshot, updateDoc, query, where 
+    deleteDoc, onSnapshot, updateDoc, query, where,
+    initializeFirestore, persistentLocalCache, persistentMultipleTabManager
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { 
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
     signOut, onAuthStateChanged, sendPasswordResetEmail 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 import { firebaseConfig, COLLECTION_NAME } from '../modules/firebase-config.js';
 
 export class CloudService {
     constructor() {
         this.app = initializeApp(firebaseConfig);
-        this.db = getFirestore(this.app);
+        
+        // Inicialização robusta do Firestore para evitar erros de rede e QUIC
+        this.db = initializeFirestore(this.app, {
+            experimentalAutoDetectLongPolling: true,
+            localCache: persistentLocalCache({
+                tabManager: persistentMultipleTabManager()
+            })
+        });
+
         this.auth = getAuth(this.app);
-        this.storage = getStorage(this.app);
         this.user = null;
         this.projectId = null;
         this.projectDocRef = null;
@@ -33,9 +40,6 @@ export class CloudService {
                 if (userSnap.exists()) {
                     this.projectId = userSnap.data().projectId;
                 } else {
-                    // Se o usuário existe no Auth mas não no Firestore, 
-                    // provavelmente é um signup em progresso ou erro de rede anterior.
-                    // O signUp já deve ter criado isso, mas por segurança:
                     this.projectId = user.uid;
                 }
                 this.projectDocRef = doc(this.db, 'projects', this.projectId);
@@ -53,7 +57,7 @@ export class CloudService {
         
         // Criar Perfil no Firestore com dados extras
         const userRef = doc(this.db, 'users', user.uid);
-        const projectId = user.uid; // Por padrão, o projectId é o UID do criador
+        const projectId = user.uid; 
         
         await setDoc(userRef, { 
             uid: user.uid,
@@ -67,7 +71,6 @@ export class CloudService {
             createdAt: new Date().toISOString()
         });
 
-        // Inicializa o documento do projeto
         const projectRef = doc(this.db, 'projects', projectId);
         await setDoc(projectRef, {
             settings: { totalBudget: 0, categories: ['Móveis', 'Eletros', 'Decoração'], totalEstimated: 0, currentSpending: 0 },
@@ -85,21 +88,11 @@ export class CloudService {
         return snap.exists() ? snap.data() : null;
     }
 
-    async updateUserProfile(data, photoFile = null) {
+    async updateUserProfile(data) {
         if (!this.user) throw new Error("Usuário não autenticado");
         const userRef = doc(this.db, 'users', this.user.uid);
-        
-        const updateData = { ...data };
-        
-        if (photoFile) {
-            const storageRef = ref(this.storage, `profile_photos/${this.user.uid}`);
-            await uploadBytes(storageRef, photoFile);
-            const photoURL = await getDownloadURL(storageRef);
-            updateData.photoURL = photoURL;
-        }
-
-        await updateDoc(userRef, updateData);
-        return updateData;
+        await updateDoc(userRef, data);
+        return data;
     }
 
     async login(email, password) { return signInWithEmailAndPassword(this.auth, email, password); }
@@ -109,7 +102,6 @@ export class CloudService {
         return sendPasswordResetEmail(this.auth, email);
     }
 
-    // Novo: Unir-se a outro projeto (Compartilhamento)
     async joinProject(targetProjectId) {
         if (!this.user) throw new Error("Usuário não autenticado");
         if (targetProjectId === this.projectId) throw new Error("Você já está utilizando este projeto!");
@@ -119,7 +111,6 @@ export class CloudService {
         
         if (!projSnap.exists()) throw new Error("Código de projeto inválido");
 
-        // Atualiza o projectId do usuário atual
         const userRef = doc(this.db, 'users', this.user.uid);
         await updateDoc(userRef, { projectId: targetProjectId });
         
@@ -189,14 +180,25 @@ export class CloudService {
     }
 
     listenToChanges(callback) {
-        if (this.unsubscribe) this.unsubscribe();
-        if (!this.projectDocRef) return;
+        if (this.unsubscribe) {
+            if (Array.isArray(this.unsubscribe)) this.unsubscribe.forEach(u => u());
+            else this.unsubscribe();
+        }
+        
+        if (!this.projectId) return;
 
-        this.unsubscribe = onSnapshot(this.projectDocRef, async (docSnap) => {
-            if (docSnap.exists()) {
-                await this.loadFullProject(callback);
-            }
-        });
+        const unsubscribes = [];
+
+        unsubscribes.push(onSnapshot(this.projectDocRef, (docSnap) => {
+            if (docSnap.exists()) this.loadFullProject(callback);
+        }));
+
+        const roomsRef = collection(this.db, 'projects', this.projectId, 'rooms');
+        unsubscribes.push(onSnapshot(roomsRef, () => {
+            this.loadFullProject(callback);
+        }));
+
+        this.unsubscribe = unsubscribes;
     }
 
     async loadFullProject(callback) {
@@ -226,7 +228,7 @@ export class CloudService {
                 savingsGrid: settings.savingsGrid || [],
                 rooms: rooms,
                 items: allItems,
-                projectId: this.projectId // Retorna o ID para exibir na UI
+                projectId: this.projectId 
             });
         } catch (error) { console.error("Erro ao carregar projeto:", error); }
     }

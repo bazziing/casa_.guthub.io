@@ -15,7 +15,7 @@ import {
     openMediumPriorityModal, closeMediumPriorityModal,
     openLowPriorityModal, closeLowPriorityModal,
     openCategoriesSummaryModal, closeCategoriesSummaryModal,
-    renderSavingsGrid
+    renderSavingsGrid, renderRoomDetail
 } from './modules/ui.js';
 import { 
     addOrUpdateItem, addNewCategory, addNewRoom,
@@ -25,7 +25,7 @@ import {
     handleLogout, confirmLogout, fetchLinkData,
     openShare, confirmJoinProject, copyProjectId, shareViaWhatsapp,
     handleSavingsSubmit, toggleSavingsCell, resetSavings,
-    loadUserProfile, updateProfile
+    loadUserProfile, updateProfile, removePhoto
 } from './modules/events.js';
 import { cloudService } from './classes/CloudService.js';
 
@@ -108,6 +108,13 @@ function applyCloudData(data) {
     if (document.getElementById('filterCategory')) populateCategoryFilters();
     const budgetInput = document.getElementById('totalBudget');
     if (budgetInput) budgetInput.value = formatCurrency(state.totalBudget);
+    
+    // Renderiza detalhes se estiver na página detail.html
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomId = urlParams.get('id');
+    if (roomId && window.location.pathname.includes('detail.html')) {
+        renderRoomDetail(roomId);
+    }
     
     // Renderiza grid se estiver na página do cofrinho
     if (typeof renderSavingsGrid === 'function' && document.getElementById('savingsContainer')) {
@@ -214,6 +221,16 @@ function addEventListeners() {
     if (elements.cancelRoomBtn) elements.cancelRoomBtn.onclick = closeAddRoomModal;
     if (elements.roomForm) elements.roomForm.onsubmit = (e) => { e.preventDefault(); addNewRoom(); };
 
+    // Botão de Editar Cômodo na página de Detalhes
+    const editThisRoomBtn = document.getElementById('editThisRoomBtn');
+    if (editThisRoomBtn) {
+        editThisRoomBtn.onclick = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomId = urlParams.get('id');
+            if (roomId) editRoom(roomId);
+        };
+    }
+
     if (document.getElementById('itemsTableBody')) {
         document.getElementById('itemsTableBody').onclick = (e) => {
             const row = e.target.closest('tr');
@@ -302,6 +319,14 @@ function addEventListeners() {
         profileForm.onsubmit = updateProfile;
         loadUserProfile();
     }
+
+    // EXPOSIÇÃO GLOBAL PARA ONCLICK (Necessário para Módulos)
+    window.editRoom = editRoom;
+    window.deleteRoom = deleteRoom;
+    window.editItem = editItem;
+    window.deleteItem = deleteItem;
+    window.toggleSavingsCell = toggleSavingsCell;
+    window.removePhoto = removePhoto;
 
     // Fechar modais com ESC
     document.addEventListener('keydown', (e) => {

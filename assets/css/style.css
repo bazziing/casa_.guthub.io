@@ -186,3 +186,71 @@ body.auth-loading [data-auth-required] {
     opacity: 0;
     visibility: hidden;
 }
+
+/* Slots de Imagem de Referência */
+.room-image-slot {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 1rem;
+    background-color: #f3f0ff;
+    border: 2px dashed #d8b4fe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.room-image-slot:hover {
+    background-color: #ede9fe;
+    border-color: #a78bfa;
+}
+
+.room-image-slot i {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #a78bfa;
+    pointer-events: none;
+}
+
+.room-image-slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 2;
+}
+
+.remove-photo-btn {
+    position: absolute !important;
+    top: 8px !important;
+    right: 8px !important;
+    width: 24px !important;
+    height: 24px !important;
+    background: #ff4d4d !important;
+    color: white !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 12px !important;
+    cursor: pointer !important;
+    z-index: 50 !important;
+    border: 2px solid white !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important;
+    transition: all 0.2s ease !important;
+}
+
+.remove-photo-btn:hover {
+    transform: scale(1.1) rotate(90deg) !important;
+    background: #cc0000 !important;
+}
+
+.remove-photo-btn i {
+    pointer-events: none !important;
+    position: static !important;
+    transform: none !important;
+    color: white !important;
+}

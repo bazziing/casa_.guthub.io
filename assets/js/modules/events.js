@@ -319,13 +319,26 @@ export async function addNewRoom() {
     const submitBtn = form?.querySelector('button[type="submit"]');
     if (submitBtn?.disabled) return;
 
+    // Capturar imagens de referência do HTML (que já estão em Base64 pelo preview)
+    const roomImages = [];
+    const imageLabels = document.querySelectorAll('.room-image-slot');
+    imageLabels.forEach(label => {
+        const img = label.querySelector('img');
+        if (img && img.dataset.base64) {
+            roomImages.push(img.dataset.base64);
+        } else if (img && img.src && img.src.startsWith('http')) {
+            roomImages.push(img.src);
+        }
+    });
+
     const room = {
         id: elements.editRoomId?.value || Date.now().toString(),
         name,
         primaryColor: document.getElementById('primaryColorHex')?.value || '#8B5CF6',
         secondaryColor: document.getElementById('secondaryColorHex')?.value || '#2DD4BF',
         accentColor: document.getElementById('accentColorHex')?.value || '#FACC15',
-        neutralColor: document.getElementById('neutralColorHex')?.value || '#FFFFFF'
+        neutralColor: document.getElementById('neutralColorHex')?.value || '#FFFFFF',
+        referenceImages: roomImages // Agora salva exatamente o que está na tela
     };
 
     try {
@@ -358,6 +371,42 @@ export async function addNewRoom() {
         }
     }
 }
+
+// Adicionar lógica de preview de imagens no modal de cômodo com compressão
+document.addEventListener('change', async (e) => {
+    if (e.target.classList.contains('room-image-input')) {
+        let file = e.target.files[0];
+        if (file) {
+            try {
+                // Comprime a imagem
+                file = await compressImage(file, { maxWidth: 800, maxHeight: 800, quality: 0.6 });
+                
+                // Validação de Tamanho (150KB = 150 * 1024 bytes)
+                if (file.size > 150 * 1024) {
+                    showAlert(`A imagem é muito pesada (${(file.size/1024).toFixed(0)}KB) mesmo após a compressão. Por favor, tente uma foto com menos detalhes ou menor.`, 'Imagem muito grande', 'error');
+                    e.target.value = ''; // Limpa o seletor
+                    return;
+                }
+            } catch (err) {
+                console.warn("Falha na compressão da imagem", err);
+            }
+            
+            const reader = new FileReader();
+            const label = e.target.parentElement;
+            reader.onload = (event) => {
+                const base64data = event.target.result;
+                label.innerHTML = `
+                    <img src="${base64data}" data-base64="${base64data}">
+                    <div class="remove-photo-btn" onclick="event.preventDefault(); event.stopPropagation(); removePhoto(this);">
+                        <i class="fas fa-times"></i>
+                    </div>
+                    <input type="file" class="hidden room-image-input" accept="image/*">
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+});
 
 export async function deleteRoom(roomId) {
     const room = state.rooms.find(r => r.id === roomId);
@@ -414,6 +463,7 @@ export function syncColorInputs() {
             el: `#${p.id}`,
             theme: 'nano',
             default: document.getElementById(p.hexId)?.value || p.default,
+            position: 'right-middle', // Posiciona na lateral direita
             swatches: [
                 '#8B5CF6', '#2DD4BF', '#FACC15', '#FFFFFF',
                 '#EF4444', '#10B981', '#3B82F6', '#F97316'
@@ -423,18 +473,14 @@ export function syncColorInputs() {
                 opacity: false,
                 hue: true,
                 interaction: {
-                    hex: false,
-                    rgba: false,
-                    hsla: false,
-                    hsva: false,
-                    cmyk: false,
+                    hex: true,
                     input: true,
                     clear: false,
                     save: true
                 }
             },
             i18n: {
-                'btn:save': 'Definir',
+                'btn:save': 'Selecionar',
                 'btn:cancel': 'Cancelar'
             }
         });
@@ -490,6 +536,25 @@ export function editRoom(roomId) {
             const hexEl = document.getElementById(map[pId].hexId);
             if (hexEl) hexEl.value = map[pId].color;
             if (pickrInstances[pId]) pickrInstances[pId].setColor(map[pId].color);
+        });
+
+        // Atualizar imagens de referência no modal
+        const imageLabels = document.querySelectorAll('.room-image-slot');
+        const existingImages = room.referenceImages || [];
+        
+        imageLabels.forEach((label, index) => {
+            if (existingImages[index]) {
+                const imgData = existingImages[index];
+                label.innerHTML = `
+                    <img src="${imgData}" data-base64="${imgData}" class="w-full h-full object-cover rounded-xl">
+                    <div class="remove-photo-btn" onclick="event.preventDefault(); event.stopPropagation(); removePhoto(this);">
+                        <i class="fas fa-times"></i>
+                    </div>
+                    <input type="file" class="hidden room-image-input" accept="image/*">
+                `;
+            } else {
+                label.innerHTML = `<i class="fas fa-plus text-xs"></i><input type="file" class="hidden room-image-input" accept="image/*">`;
+            }
         });
 
         openAddRoomModal();
@@ -646,32 +711,12 @@ export async function loadUserProfile() {
             }
             
             if (profile.photoURL) {
-                // Garantir que a imagem seja exibida se não estiver no cache ou se a URL for nova
-                const isNewURL = profile.photoURL !== localStorage.getItem('user_photo_url_ref');
+                // Exibir a imagem diretamente (o navegador gerencia o cache automaticamente)
+                if (photoDisplay) photoDisplay.innerHTML = `<img src="${profile.photoURL}" class="w-full h-full object-cover">`;
+                updateSidebarPhoto(profile.photoURL);
                 
-                if (!cachedPhoto || isNewURL) {
-                    if (photoDisplay) photoDisplay.innerHTML = `<img src="${profile.photoURL}" class="w-full h-full object-cover">`;
-                    updateSidebarPhoto(profile.photoURL);
-                }
-
-                // Tentar atualizar o cache apenas se a URL for nova
-                if (isNewURL) {
-                    try {
-                        const response = await fetch(profile.photoURL);
-                        const blob = await response.blob();
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                            const base64data = reader.result;                
-                            localStorage.setItem('user_photo_cache', base64data);
-                            localStorage.setItem('user_photo_url_ref', profile.photoURL);
-                            updateSidebarPhoto(base64data);
-                        }
-                        reader.readAsDataURL(blob);
-                    } catch (corsError) {
-                        console.warn("CORS: Mantendo URL direta.");
-                        localStorage.setItem('user_photo_url_ref', profile.photoURL);
-                    }
-                }
+                // Apenas guarda a URL para saber se ela mudou no futuro
+                localStorage.setItem('user_photo_url_ref', profile.photoURL);
             }
         }
     } catch (error) {
@@ -697,31 +742,47 @@ export async function updateProfile(e) {
     const cep = document.getElementById('profileCep').value;
     const address = document.getElementById('profileAddress').value;
     const photoInput = document.getElementById('profilePhotoInput');
-    const photoFile = photoInput.files[0];
+    let photoFile = photoInput.files[0];
 
     try {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Salvando...';
 
-        await cloudService.updateUserProfile({
-            name, phone, cep, address
-        }, photoFile);
+        const updateData = { name, phone, cep, address };
 
-        await showAlert('Perfil atualizado com sucesso!', 'Sucesso', 'success');
-        
+        // Se houver nova foto, converter para Base64
         if (photoFile) {
-            // Recarregar foto no display localmente para feedback imediato
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const photoDisplay = document.getElementById('profilePhotoDisplay');
-                photoDisplay.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
-            };
-            reader.readAsDataURL(photoFile);
+            try {
+                const compressed = await compressImage(photoFile, { maxWidth: 300, maxHeight: 300, quality: 0.5 });
+                const base64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(compressed);
+                });
+                updateData.photoURL = base64;
+                
+                // Salvar no cache local para carregamento instantâneo
+                localStorage.setItem('user_photo_cache', base64);
+                updateSidebarPhoto(base64);
+            } catch (err) {
+                console.warn("Erro ao processar foto:", err);
+            }
         }
+
+        await cloudService.updateUserProfile(updateData);
+        await showAlert('Perfil atualizado com sucesso!', 'Sucesso', 'success');
+
     } catch (error) {
         showAlert('Erro ao atualizar perfil: ' + error.message, 'Erro', 'error');
     } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Salvar Alterações';
+    }
+}
+
+export function removePhoto(btn) {
+    const label = btn.parentElement;
+    if (label) {
+        label.innerHTML = `<i class="fas fa-plus text-xs"></i><input type="file" class="hidden room-image-input" accept="image/*">`;
     }
 }
