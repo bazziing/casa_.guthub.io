@@ -1,0 +1,43 @@
+name: Agroinova Scheduled Jobs
+
+on:
+  schedule:
+    # A cada 5 minutos: keep-alive + processamento de ETo horária
+    - cron: "*/5 * * * *"
+    # 00:05 America/Sao_Paulo = 03:05 UTC (Brasil não observa horário de verão)
+    - cron: "5 3 * * *"
+  workflow_dispatch:
+
+env:
+  API_URL: https://agroinova-api-ajbv.onrender.com
+
+jobs:
+  monitoramento-e-eto:
+    if: github.event.schedule == '*/5 * * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Keep-alive (ping /health)
+        run: |
+          curl -sS --max-time 50 "$API_URL/health" && echo "Keep-alive OK" || echo "::warning::Keep-alive falhou"
+
+      - name: Trigger hourly ETo job
+        run: |
+          curl -sS --fail --max-time 480 -X POST "$API_URL/automation/trigger-hourly-eto-job" \
+            -H "x-api-key: ${{ secrets.INTERNAL_API_KEY }}" \
+            -H "Content-Type: application/json"
+
+  pipeline-fechamento-diario:
+    if: github.event.schedule == '5 3 * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Etapa 1 - Resumo diário
+        run: |
+          curl -sS --fail --max-time 260 -X POST "$API_URL/automation/trigger-daily-summary-job" \
+            -H "X-API-Key: ${{ secrets.INTERNAL_API_KEY }}" \
+            -H "Content-Type: application/json"
+
+      - name: Etapa 2 - Consolidação (Bucket Pattern)
+        run: |
+          curl -sS --fail --max-time 260 -X POST "$API_URL/automation/trigger-consolidation-job" \
+            -H "X-API-Key: ${{ secrets.INTERNAL_API_KEY }}" \
+            -H "Content-Type: application/json"
